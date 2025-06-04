@@ -6,16 +6,18 @@ import {
   Users,
   Calendar
 } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
 export default function Sidebar() {
   const [activeItem, setActiveItem] = useState('Feed');
 
+  const user_id = 123;
   const navigationItems = [
-    { name: 'Feed', icon: Home },
-    { name: 'My Profile', icon: User },
-    { name: 'Messages', icon: MessageSquare },
-    { name: 'Clubs', icon: Users },
-    { name: 'Events', icon: Calendar },
+    { name: 'Feed', icon: Home, path: '/' },
+    { name: 'My Profile', icon: User, path: `/profile/${user_id}`},
+    { name: 'Messages', icon: MessageSquare, path: '/messages' },
+    { name: 'Clubs', icon: Users, path: '/club' },
+    { name: 'Events', icon: Calendar, path: '/event' }, // missing `/` fixed here
   ];
 
   return (
@@ -40,17 +42,20 @@ export default function Sidebar() {
             const Icon = item.icon;
             return (
               <li key={item.name}>
-                <button
+                <NavLink
+                  to={item.path}
                   onClick={() => setActiveItem(item.name)}
-                  className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                    activeItem === item.name
-                      ? 'bg-indigo-50 text-indigo-700 border-l-4 border-indigo-600'
-                      : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'
-                  }`}
+                  className={({ isActive }) =>
+                    `w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      isActive || activeItem === item.name
+                        ? 'bg-indigo-50 text-indigo-700 border-l-4 border-indigo-600'
+                        : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'
+                    }`
+                  }
                 >
                   <Icon className="w-5 h-5 mr-3" />
                   {item.name}
-                </button>
+                </NavLink>
               </li>
             );
           })}

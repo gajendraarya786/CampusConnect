@@ -54,6 +54,7 @@ const samplePosts = [
     stats: { likes: 24, comments: 8, shares: 3 },
     type: "text"
   },
+  
   {
     id: 2,
     user: {
