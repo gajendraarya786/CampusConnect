@@ -142,7 +142,7 @@ export default function UserProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 ">
       {/* Cover Photo & Profile Header */}
       <div className="relative">
         {/* Cover Image */}

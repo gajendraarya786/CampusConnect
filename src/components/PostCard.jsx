@@ -37,7 +37,6 @@ const VerifiedIcon = () => (
   </svg>
 );
 
-// Sample Posts Data
 const samplePosts = [
   {
     id: 1,
@@ -48,13 +47,12 @@ const samplePosts = [
       verified: true,
       avatarColor: "from-purple-500 to-pink-500"
     },
-    content: "Just finished my Computer Science project on machine learning! The algorithm finally works after weeks of debugging. Feeling accomplished! 🎉\n\n#MachineLearning #ComputerScience #StudentLife",
+    content: "Just finished my Computer Science project on machine learning! Feeling accomplished! 🎉",
     image: null,
     timestamp: "2 hours ago",
     stats: { likes: 24, comments: 8, shares: 3 },
     type: "text"
   },
-  
   {
     id: 2,
     user: {
@@ -79,7 +77,7 @@ const samplePosts = [
       verified: true,
       avatarColor: "from-green-500 to-blue-500"
     },
-    content: "📚 Advanced Mathematics Study Group\n🕐 Every Tuesday & Thursday 6-8 PM\n📍 Central Library - Room 204\n\nAll levels welcome! We're covering calculus and linear algebra this week. Bring your questions and let's learn together! 💪",
+    content: "📚 Study Group\n🕐 Tues/Thurs 6-8 PM\n📍 Library Room 204\nCovering calculus and linear algebra. Join us! 💪",
     image: null,
     timestamp: "6 hours ago",
     stats: { likes: 89, comments: 34, shares: 45 },
@@ -92,205 +90,126 @@ export default function SocialMediaPostCards() {
   const [savedPosts, setSavedPosts] = useState(new Set());
   const [showComments, setShowComments] = useState(new Set());
 
-  const handleLike = (postId) => {
-    const newLikedPosts = new Set(likedPosts);
-    if (newLikedPosts.has(postId)) {
-      newLikedPosts.delete(postId);
-    } else {
-      newLikedPosts.add(postId);
-    }
-    setLikedPosts(newLikedPosts);
-  };
-
-  const handleSave = (postId) => {
-    const newSavedPosts = new Set(savedPosts);
-    if (newSavedPosts.has(postId)) {
-      newSavedPosts.delete(postId);
-    } else {
-      newSavedPosts.add(postId);
-    }
-    setSavedPosts(newSavedPosts);
-  };
-
-  const toggleComments = (postId) => {
-    const newShowComments = new Set(showComments);
-    if (newShowComments.has(postId)) {
-      newShowComments.delete(postId);
-    } else {
-      newShowComments.add(postId);
-    }
-    setShowComments(newShowComments);
+  const toggleStateSet = (stateSetter, currentSet, postId) => {
+    const newSet = new Set(currentSet);
+    newSet.has(postId) ? newSet.delete(postId) : newSet.add(postId);
+    stateSetter(newSet);
   };
 
   return (
-    <>
-      {/* Create Post Card */}
-      <textarea
-        placeholder="What's happening on campus today?"
-        className="w-full resize-none border-none focus:outline-none text-lg placeholder-gray-500 min-h-[80px] rounded-xl shadow-sm border border-gray-200 p-6 mb-6 hover:shadow-md transition-shadow"
-        rows="3"
-      />
-      <div className="flex items-center justify-between mb-6 pt-4 border-t border-gray-100">
-        <div className="flex items-center space-x-4 text-indigo-600">
-          <button className="hover:bg-indigo-50 p-2 rounded-full transition">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </button>
-          <button className="hover:bg-indigo-50 p-2 rounded-full transition">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V3a1 1 0 011 1v12a4 4 0 01-4 4H8a4 4 0 01-4-4V4a1 1 0 011-1m0-1h10" />
-            </svg>
-          </button>
-          <button className="hover:bg-indigo-50 p-2 rounded-full transition">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+    <div className="max-w-4xl mx-auto px-4">
+      {/* Post Creator */}
+      <div className="bg-white p-4 mb-6 rounded-xl shadow border border-gray-200">
+        <textarea
+          placeholder="What's happening on campus today?"
+          className="w-full resize-none text-base min-h-[80px] rounded-xl p-4 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          rows="3"
+        />
+        <div className="flex items-center justify-between mt-4">
+          <div className="flex space-x-2 text-indigo-600">
+            {["photo", "event", "emoji"].map((type, idx) => (
+              <button key={idx} className="hover:bg-indigo-50 p-2 rounded-full transition">
+                <span className="sr-only">{type}</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                </svg>
+              </button>
+            ))}
+          </div>
+          <button className="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-indigo-700">
+            Post
           </button>
         </div>
-        <button className="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
-          Post
-        </button>
       </div>
 
       {/* Feed Posts */}
       {samplePosts.map((post) => (
-        <article
-          key={post.id}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow mb-6"
-        >
-          {/* Post Header */}
-          <div className="p-6 pb-4 flex items-start justify-between">
+        <article key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+          <div className="p-4 flex justify-between items-start">
             <div className="flex items-start space-x-3">
-              <div
-                className={`w-12 h-12 rounded-full bg-gradient-to-r ${post.user.avatarColor} flex items-center justify-center flex-shrink-0`}
-              >
-                <span className="text-white font-semibold text-lg">{post.user.avatar}</span>
+              <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${post.user.avatarColor} flex items-center justify-center text-white font-semibold text-lg`}>
+                {post.user.avatar}
               </div>
-              <div className="min-w-0 flex-1">
+              <div>
                 <div className="flex items-center space-x-2">
-                  <h3 className="font-semibold text-gray-900 truncate">{post.user.name}</h3>
+                  <h3 className="font-bold text-lg text-gray-900">{post.user.name}</h3>
                   {post.user.verified && <VerifiedIcon />}
                 </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <span>{post.user.username}</span>
-                  <span>•</span>
-                  <span>{post.timestamp}</span>
-                </div>
+                <p className="text-sm text-gray-500">{post.user.username} • {post.timestamp}</p>
               </div>
             </div>
-            <button className="text-gray-400 hover:text-gray-600 hover:bg-gray-50 p-2 rounded-full transition">
+            <button className="text-gray-400 hover:text-gray-600 p-2">
               <DotsIcon />
             </button>
           </div>
 
-          {/* Post Content */}
-          <div className="px-6 pb-4">
-            <p className="text-gray-800 leading-relaxed whitespace-pre-line">{post.content}</p>
+          <div className="px-4 pb-3">
+            <p className="text-base text-gray-800 whitespace-pre-line">{post.content}</p>
           </div>
 
-          {/* Post Image */}
           {post.image && (
-            <div className="px-6 pb-4">
-              <img
-                src={post.image}
-                alt="Post content"
-                className="w-full rounded-xl object-cover max-h-96 border border-gray-200"
-              />
-            </div>
+            <img src={post.image} alt="Post" className="w-full object-cover max-h-96 border-t border-b border-gray-200" />
           )}
 
-          {/* Post Stats */}
-          <div className="px-6 pb-3 flex items-center justify-between text-sm text-gray-500">
-            <div className="flex items-center space-x-4">
-              <span>{post.stats.likes + (likedPosts.has(post.id) ? 1 : 0)} likes</span>
-              <span>{post.stats.comments} comments</span>
-              <span>{post.stats.shares} shares</span>
-            </div>
+          <div className="px-4 py-2 flex justify-between text-sm text-gray-500">
+            <span>{post.stats.likes + (likedPosts.has(post.id) ? 1 : 0)} likes</span>
+            <span>{post.stats.comments} comments</span>
+            <span>{post.stats.shares} shares</span>
           </div>
 
-          {/* Action Buttons */}
-          <div className="px-6 py-3 border-t border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => handleLike(post.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-full transition ${
-                    likedPosts.has(post.id)
-                      ? 'text-red-600 bg-red-50 hover:bg-red-100'
-                      : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
-                  }`}
-                >
-                  <HeartIcon filled={likedPosts.has(post.id)} />
-                  <span className="font-medium">Like</span>
-                </button>
-
-                <button
-                  onClick={() => toggleComments(post.id)}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-full text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition"
-                >
-                  <CommentIcon />
-                  <span className="font-medium">Comment</span>
-                </button>
-
-                <button className="flex items-center space-x-2 px-4 py-2 rounded-full text-gray-600 hover:text-green-600 hover:bg-green-50 transition">
-                  <ShareIcon />
-                  <span className="font-medium">Share</span>
-                </button>
-              </div>
-
+          <div className="px-4 py-2 border-t border-gray-100 flex justify-between items-center">
+            <div className="flex space-x-2">
               <button
-                onClick={() => handleSave(post.id)}
-                className={`p-2 rounded-full transition ${
-                  savedPosts.has(post.id)
-                    ? 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100'
-                    : 'text-gray-600 hover:text-yellow-600 hover:bg-yellow-50'
+                onClick={() => toggleStateSet(setLikedPosts, likedPosts, post.id)}
+                className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                  likedPosts.has(post.id) ? 'text-red-600 bg-red-50' : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
                 }`}
               >
-                <BookmarkIcon filled={savedPosts.has(post.id)} />
+                <HeartIcon filled={likedPosts.has(post.id)} />
+                <span>Like</span>
+              </button>
+
+              <button
+                onClick={() => toggleStateSet(setShowComments, showComments, post.id)}
+                className="flex items-center space-x-1 px-3 py-1.5 rounded-full text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+              >
+                <CommentIcon />
+                <span>Comment</span>
+              </button>
+
+              <button className="flex items-center space-x-1 px-3 py-1.5 rounded-full text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50">
+                <ShareIcon />
+                <span>Share</span>
               </button>
             </div>
+
+            <button
+              onClick={() => toggleStateSet(setSavedPosts, savedPosts, post.id)}
+              className={`p-2 rounded-full ${
+                savedPosts.has(post.id) ? 'text-yellow-600 bg-yellow-50' : 'text-gray-600 hover:text-yellow-600 hover:bg-yellow-50'
+              }`}
+            >
+              <BookmarkIcon filled={savedPosts.has(post.id)} />
+            </button>
           </div>
 
-          {/* Comments Section */}
           {showComments.has(post.id) && (
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
-              <div className="flex space-x-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-semibold text-xs">You</span>
+            <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
+              <div className="flex space-x-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold">
+                  You
                 </div>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    placeholder="Write a comment..."
-                    className="w-full bg-white border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                </div>
+                <input
+                  type="text"
+                  placeholder="Write a comment..."
+                  className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
-
-              {/* Sample Comments */}
-              <div className="space-y-3">
-                <div className="flex space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-semibold text-xs">JD</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="bg-white rounded-2xl px-4 py-2 inline-block">
-                      <p className="font-semibold text-sm text-gray-900">John Doe</p>
-                      <p className="text-sm text-gray-700">Great work! This is really impressive 👏</p>
-                    </div>
-                    <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                      <button className="hover:underline">Like</button>
-                      <button className="hover:underline">Reply</button>
-                      <span>1h</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <div className="text-sm text-gray-600">No comments yet. Be the first to comment!</div>
             </div>
           )}
         </article>
       ))}
-    </>
+    </div>
   );
 }
