@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Upload, X, Check, User, Mail, Lock, Calendar, Phone, Github, Linkedin, Code, FileText, Tag } from 'lucide-react';
+import axios from 'axios';
 
 const SignupForm = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +19,8 @@ const SignupForm = () => {
     bio: "",
     skills: "",
   });
+
+  const [message, setMessage] = useState("");
 
   const [avatar, setAvatar] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
@@ -109,6 +112,7 @@ const SignupForm = () => {
     if (!validateStep(2)) return;
     
     setIsLoading(true);
+    setMessage("");
     
     const data = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
@@ -117,16 +121,35 @@ const SignupForm = () => {
     if (avatar) data.append("avatar", avatar);
     if (coverImage) data.append("coverImage", coverImage);
 
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log("Registration successful");
-      // Handle success
-    } catch (error) {
-      console.error("Registration error", error);
-    } finally {
-      setIsLoading(false);
-    }
+ try {
+  const response = await axios.post('http://localhost:8000/api/v1/users/register', data);
+
+  // Axios only enters try if status is 2xx
+  console.log("Registration successful", response.data);
+  setMessage("Account created successfully! Welcome to our community.");
+
+  // Reset form or redirect user here
+} catch (error) {
+  console.error("Registration error", error);
+
+  if (error.response) {
+    // Server responded with a non-2xx status
+    const errorMessage =
+      error.response.data?.message ||
+      error.response.data?.error ||
+      `Registration failed (${error.response.status})`;
+    setMessage(`Error: ${errorMessage}`);
+  } else if (error.request) {
+    // Request was made but no response received
+    setMessage("Error: Unable to connect to server. Please check if the server is running.");
+  } else {
+    // Other error (like config error)
+    setMessage("Error: Something went wrong. Please try again.");
+  }
+} finally {
+  setIsLoading(false);
+}
+
   };
 
   const getStepIcon = (field) => {
@@ -223,9 +246,9 @@ const SignupForm = () => {
                   }`}
                 >
                   <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
                 </select>
                 {errors.gender && <p className="mt-2 text-sm text-red-600 flex items-center"><X className="h-4 w-4 mr-1" />{errors.gender}</p>}
               </div>
@@ -448,6 +471,17 @@ const SignupForm = () => {
             </div>
           ))}
         </div>
+        
+        {/* Success/Error Message */}
+        {message && (
+          <div className={`mb-6 p-4 rounded-xl ${
+            message.includes('Error') 
+              ? 'bg-red-50 border border-red-200 text-red-700' 
+              : 'bg-green-50 border border-green-200 text-green-700'
+          }`}>
+            <p className="font-medium">{message}</p>
+          </div>
+        )}
         
         {/* Form */}
         <div className="bg-white rounded-2xl shadow-lg p-8">
