@@ -97,7 +97,7 @@ export default function SocialMediaPostCards() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4">
+    <div className="max-w-4xl mx-auto px-2">
       {/* Post Creator */}
       <div className="bg-white p-4 mb-6 rounded-xl shadow border border-gray-200">
         <textarea
@@ -157,7 +157,7 @@ export default function SocialMediaPostCards() {
             <span>{post.stats.shares} shares</span>
           </div>
 
-          <div className="px-4 py-2 border-t border-gray-100 flex justify-between items-center">
+          <div className="px-1 py-2 border-t border-gray-100 flex justify-between items-center">
             <div className="flex space-x-2">
               <button
                 onClick={() => toggleStateSet(setLikedPosts, likedPosts, post.id)}

@@ -147,7 +147,9 @@ export default function Navbar() {
               className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500 hover:scale-105 transition-transform"
             />
 
-            <button className="bg-blue-800 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-blue-900 transition">
+            <button className="bg-blue-800 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-blue-900 transition"
+                    onClick={() => navigate('/login')}
+            >
               Log in
             </button>
 

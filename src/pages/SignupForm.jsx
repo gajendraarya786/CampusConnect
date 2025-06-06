@@ -162,7 +162,7 @@ const SignupForm = () => {
                       name={field}
                       value={formData[field]}
                       onChange={handleChange}
-                      className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
+                      className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl focus: outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-600 transition-all duration-200 ${
                         errors[field] ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
                       placeholder={`Enter your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`}
