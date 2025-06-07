@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import profile from '../assets/profile1.jpg'
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
 
 // Icons
 const EditIcon = () => (
@@ -39,120 +40,191 @@ const PhoneIcon = () => (
   </svg>
 );
 
-const HeartIcon = ({ filled = false }) => (
-  <svg className="w-5 h-5" fill={filled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-  </svg>
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center min-h-screen">
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+  </div>
 );
 
-const CommentIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-  </svg>
+const ErrorMessage = ({ message, onRetry }) => (
+  <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+    <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
+      <div className="text-red-500 text-6xl mb-4">⚠️</div>
+      <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Profile</h2>
+      <p className="text-gray-600 mb-4">{message}</p>
+      <button 
+        onClick={onRetry}
+        className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+      >
+        Try Again
+      </button>
+    </div>
+  </div>
 );
 
-const ShareIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-  </svg>
-);
-
-const PlusIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-  </svg>
-);
-
-const ImageIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
-
-// Sample user data
-const userData = {
-  name: "Alex Johnson",
-  username: "@alexjohnson",
-  bio: "Computer Science student at Stanford University. Passionate about AI, web development, and photography. Always eager to learn and connect with fellow students!",
-  avatar: "AJ",
-  coverImage: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&h=300&fit=crop",
-  location: "Stanford, CA",
-  joinDate: "September 2022",
-  major: "Computer Science",
-  year: "Junior",
-  email: "alex.johnson@stanford.edu",
-  phone: "+1 (555) 123-4567",
-  followers: 324,
-  following: 189,
-  posts: 87,
-  interests: ["AI/ML", "Web Development", "Photography", "Gaming", "Basketball"]
+// Utility functions
+const getInitials = (name) => {
+  if (!name) return 'U';
+  return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
 };
 
+const formatDate = (dateString) => {
+  if (!dateString) return 'Unknown';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long' 
+  });
+};
 
-// Sample posts data
-const userPosts = [
-  {
-    id: 1,
-    content: "Just finished my machine learning project on neural networks! The results are better than expected. Excited to present it next week! 🤖",
-    timestamp: "2 hours ago",
-    likes: 15,
-    comments: 4,
-    image: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&h=300&fit=crop"
-  },
-  {
-    id: 2,
-    content: "Beautiful sunset from the campus today! Perfect weather for studying outside with friends. 📚☀️",
-    timestamp: "1 day ago",
-    likes: 28,
-    comments: 8,
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300&fit=crop"
-  },
-  {
-    id: 3,
-    content: "Anyone interested in joining our study group for Advanced Algorithms? We meet every Tuesday at the library. DM me if you're interested!",
-    timestamp: "2 days ago",
-    likes: 12,
-    comments: 6,
-    image: null
-  },
-  {
-    id: 4,
-    content: "Attending the tech conference was amazing! So many insights about the future of technology. Grateful for these learning opportunities! 💻",
-    timestamp: "1 week ago",
-    likes: 35,
-    comments: 12,
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&h=300&fit=crop"
-  }
-];
-
-export default function UserProfile() {
-  const [activeTab, setActiveTab] = useState('posts');
+export default function Profile() {
+  const { id } = useParams(); // Get the id from URL parameters
+  const navigate = useNavigate(); // Initialize useNavigate
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [likedPosts, setLikedPosts] = useState(new Set());
-  const [isFollowing, setIsFollowing] = useState(false);
 
-  const handleLike = (postId) => {
-    const newLikedPosts = new Set(likedPosts);
-    if (newLikedPosts.has(postId)) {
-      newLikedPosts.delete(postId);
-    } else {
-      newLikedPosts.add(postId);
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('accessToken');
+      let endpoint = '';
+      let config = {};
+
+      if (id && id !== '') {
+        // If id is provided and not empty, fetch that user's profile (public view)
+        endpoint = `/users/${id}`;
+        if (token) {
+          config.headers = { Authorization: `Bearer ${token}` };
+        }
+      } else {
+        // If id is undefined or an empty string (i.e., path is /profile)
+        // Try to fetch logged-in user's profile
+        endpoint = '/users/profile';
+        if (!token) {
+          // If no token for own profile, display message or redirect
+          setLoading(false);
+          setUserData(null); // Clear previous data
+          setError("Please log in to view your profile.");
+          return;
+        }
+        config.headers = { Authorization: `Bearer ${token}` };
+      }
+
+      // Debug logs
+      console.log('Profile.jsx: id from useParams', id);
+      console.log('Profile.jsx: Constructed endpoint', endpoint);
+      console.log('Profile.jsx: Axios config headers', config.headers);
+
+      const response = await axios.get(`http://localhost:8000/api/v1${endpoint}`, config);
+
+      setUserData(response.data.data);
+    } catch (err) {
+      // Handle 404 for public profiles gracefully without redirecting to login
+      if (err.response?.status === 404 && id) {
+        setError("User not found.");
+      } else if (err.response?.status === 401 && !id) {
+        // If 401 for own profile, redirect to login
+        setError("Unauthorized. Please login.");
+        navigate('/login', { replace: true });
+      } else {
+        setError(err.response?.data?.message || err.message || 'Failed to fetch profile');
+        console.error('Error fetching profile:', err);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLikedPosts(newLikedPosts);
   };
 
+  useEffect(() => {
+    fetchUserProfile();
+  }, [id]); // Re-fetch when id changes
+
+  const handleRetry = () => {
+    fetchUserProfile();
+  };
+
+  // Determine if the current profile is the logged-in user's own profile
+  const getLoggedInUserId = () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const loggedInUser = JSON.parse(userStr);
+        return loggedInUser._id;
+      }
+    } catch (e) {
+      console.error("Failed to parse user from localStorage:", e);
+    }
+    return null;
+  };
+
+  const loggedInUserId = getLoggedInUserId();
+  const isOwnProfile = !id || (id === loggedInUserId);
+  const isAuthenticated = !!localStorage.getItem('accessToken');
+
+  const handleEditClick = () => {
+    if (isAuthenticated && isOwnProfile) {
+      setIsEditing(!isEditing);
+    } else {
+      navigate('/login', { replace: true });
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} onRetry={handleRetry} />;
+  }
+
+  // If userData is null and no error, it means user is not found or not logged in for own profile
+  if (!userData && !error) {
+    return <ErrorMessage message="User profile not found or requires login." onRetry={handleRetry} />;
+  }
+
+  // Extract user data with fallbacks
+  const {
+    fullname = userData.fullname || 'Unknown User',
+    username = userData.username || '',
+    bio = userData.bio || 'No bio available',
+    avatar = userData.avatar || '',
+    coverImage = userData.coverImage || '',
+    branch = userData.branch || '',
+    year = userData.year || '',
+    email = userData.email || '',
+    mobile = userData.mobile || '',
+    skills = userData.skills || [],
+    createdAt = userData.createdAt,
+    linkedIn = userData.linkedIn || '',
+    github = userData.github || '',
+    leetcode = userData.leetcode || ''
+  } = userData;
+
+  // Generate avatar initials if no avatar image
+  const avatarInitials = getInitials(fullname);
+  const joinDate = formatDate(createdAt);
+
+  // Default cover image
+  const defaultCoverImage = "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&h=400&fit=crop";
+
   return (
-    <div className="min-h-screen bg-gray-50 ">
+    <div className="min-h-screen bg-gray-50">
       {/* Cover Photo & Profile Header */}
       <div className="relative">
         {/* Cover Image */}
         <div className="h-64 bg-gradient-to-r from-blue-500 to-purple-600 relative overflow-hidden">
           <img 
-            src={userData.coverImage} 
+            src={coverImage || defaultCoverImage} 
             alt="Cover" 
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
           />
-
         </div>
 
         {/* Profile Info */}
@@ -161,42 +233,50 @@ export default function UserProfile() {
             <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-6">
               {/* Avatar */}
               <div className="relative">
-                <div className="w-32 h-32 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                  <span className="text-white font-bold text-4xl">{userData.avatar}</span>
+                {avatar ? (
+                  <img
+                    src={avatar}
+                    alt={fullname}
+                    className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div 
+                  className={`w-32 h-32 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg ${avatar ? 'hidden' : ''}`}
+                >
+                  <span className="text-white font-bold text-4xl">{avatarInitials}</span>
                 </div>
-                <button className="absolute bottom-2 right-2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-50 transition">
-                  <EditIcon />
-                </button>
+                {isOwnProfile && isAuthenticated && (
+                  <button 
+                    onClick={handleEditClick}
+                    className="absolute bottom-2 right-2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-50 transition"
+                  >
+                    <EditIcon />
+                  </button>
+                )}
               </div>
 
               {/* Name and Actions */}
               <div className="flex-1 mt-6 sm:mt-0 sm:pb-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{userData.name}</h1>
-                    <p className="text-gray-600">{userData.username}</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{fullname}</h1>
+                    <p className="text-gray-600">
+                      {username.startsWith('@') ? username : `@${username}`}
+                    </p>
                   </div>
-                  <div className="flex space-x-3 mt-4 sm:mt-0">
+                  {isOwnProfile && isAuthenticated && (
                     <button
-                      onClick={() => setIsFollowing(!isFollowing)}
-                      className={`px-6 py-2 rounded-lg font-medium transition ${
-                        isFollowing 
-                          ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
-                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      }`}
-                    >
-                      {isFollowing ? 'Following' : 'Follow'}
-                    </button>
-                    <button className="px-6 py-2 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition">
-                      Message
-                    </button>
-                    <button
-                      onClick={() => setIsEditing(!isEditing)}
-                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition"
+                      onClick={handleEditClick}
+                      className="mt-4 sm:mt-0 px-6 py-2 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition flex items-center space-x-2"
                     >
                       <EditIcon />
+                      <span>Edit Profile</span>
                     </button>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -211,240 +291,107 @@ export default function UserProfile() {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">About</h2>
-              <p className="text-gray-700 mb-4">{userData.bio}</p>
+              <p className="text-gray-700 mb-4">{bio}</p>
               
               <div className="space-y-3">
                 <div className="flex items-center text-gray-600">
-                  <LocationIcon />
-                  <span className="ml-2 text-sm">{userData.location}</span>
-                </div>
-                <div className="flex items-center text-gray-600">
                   <CalendarIcon />
-                  <span className="ml-2 text-sm">Joined {userData.joinDate}</span>
+                  <span className="ml-2 text-sm">Joined {joinDate}</span>
                 </div>
-                <div className="flex items-center text-gray-600">
-                  <BookIcon />
-                  <span className="ml-2 text-sm">{userData.major} • {userData.year}</span>
-                </div>
-                <div className="flex items-center text-gray-600">
-                  <EmailIcon />
-                  <span className="ml-2 text-sm">{userData.email}</span>
-                </div>
-                <div className="flex items-center text-gray-600">
-                  <PhoneIcon />
-                  <span className="ml-2 text-sm">{userData.phone}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Stats</h2>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-indigo-600">{userData.posts}</div>
-                  <div className="text-sm text-gray-600">Posts</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-indigo-600">{userData.followers}</div>
-                  <div className="text-sm text-gray-600">Followers</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-indigo-600">{userData.following}</div>
-                  <div className="text-sm text-gray-600">Following</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Interests */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Interests</h2>
-              <div className="flex flex-wrap gap-2">
-                {userData.interests.map((interest, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium"
-                  >
-                    {interest}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Content - Posts */}
-          <div className="lg:col-span-2">
-            {/* Tabs */}
-            <div className="bg-white rounded-lg shadow-sm mb-6">
-              <div className="border-b border-gray-200">
-                <nav className="flex space-x-8 px-6">
-                  <button
-                    onClick={() => setActiveTab('posts')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'posts'
-                        ? 'border-indigo-500 text-indigo-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    Posts
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('photos')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'photos'
-                        ? 'border-indigo-500 text-indigo-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    Photos
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('about')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'about'
-                        ? 'border-indigo-500 text-indigo-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    About
-                  </button>
-                </nav>
-              </div>
-            </div>
-
-            {/* Create Post (if own profile) */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">{userData.avatar}</span>
-                </div>
-                <input
-                  type="text"
-                  placeholder="What's on your mind, Alex?"
-                  className="flex-1 bg-gray-100 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <button className="flex items-center space-x-2 text-gray-600 hover:text-indigo-600 transition">
-                    <ImageIcon />
-                    <span className="text-sm">Photo</span>
-                  </button>
-                  <button className="flex items-center space-x-2 text-gray-600 hover:text-indigo-600 transition">
-                    <PlusIcon />
-                    <span className="text-sm">More</span>
-                  </button>
-                </div>
-                <button className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
-                  Post
-                </button>
-              </div>
-            </div>
-
-            {/* Posts Feed */}
-            {activeTab === 'posts' && (
-              <div className="space-y-6">
-                {userPosts.map((post) => (
-                  <div key={post.id} className="bg-white rounded-lg shadow-sm p-6">
-                    {/* Post Header */}
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-semibold text-sm">{userData.avatar}</span>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{userData.name}</h3>
-                        <p className="text-sm text-gray-500">{post.timestamp}</p>
-                      </div>
-                    </div>
-
-                    {/* Post Content */}
-                    <p className="text-gray-800 mb-4">{post.content}</p>
-
-                    {/* Post Image */}
-                    {post.image && (
-                      <img
-                        src={post.image}
-                        alt="Post content"
-                        className="w-full rounded-lg mb-4 max-h-96 object-cover"
-                      />
-                    )}
-
-                    {/* Post Actions */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <div className="flex items-center space-x-6">
-                        <button
-                          onClick={() => handleLike(post.id)}
-                          className={`flex items-center space-x-2 ${
-                            likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-600'
-                          } hover:text-red-500 transition`}
-                        >
-                          <HeartIcon filled={likedPosts.has(post.id)} />
-                          <span className="text-sm">
-                            {post.likes + (likedPosts.has(post.id) ? 1 : 0)}
-                          </span>
-                        </button>
-
-                        <button className="flex items-center space-x-2 text-gray-600 hover:text-indigo-600 transition">
-                          <CommentIcon />
-                          <span className="text-sm">{post.comments}</span>
-                        </button>
-
-                        <button className="flex items-center space-x-2 text-gray-600 hover:text-indigo-600 transition">
-                          <ShareIcon />
-                          <span className="text-sm">Share</span>
-                        </button>
-                      </div>
-                    </div>
+                {(branch || year) && (
+                  <div className="flex items-center text-gray-600">
+                    <BookIcon />
+                    <span className="ml-2 text-sm">
+                      {branch} {year && `• ${year}`}
+                    </span>
                   </div>
-                ))}
+                )}
+                {email && (
+                  <div className="flex items-center text-gray-600">
+                    <EmailIcon />
+                    <span className="ml-2 text-sm">{email}</span>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Photos Tab */}
-            {activeTab === 'photos' && (
+            {/* Social Links */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Social Links</h2>
+              <div className="space-y-3">
+                {linkedIn && (
+                  <a 
+                    href={linkedIn}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-gray-600 hover:text-indigo-600 transition"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                    </svg>
+                    <span className="text-sm">LinkedIn</span>
+                  </a>
+                )}
+                {github && (
+                  <a 
+                    href={github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-gray-600 hover:text-indigo-600 transition"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    <span className="text-sm">GitHub</span>
+                  </a>
+                )}
+                {leetcode && (
+                  <a 
+                    href={leetcode}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-gray-600 hover:text-indigo-600 transition"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a1.653 1.653 0 0 0 0 2.226 1.653 1.653 0 0 0 2.226 0l2.939-3.141 2.939 3.141a1.653 1.653 0 0 0 2.226 0 1.653 1.653 0 0 0 0-2.226l-3.854-4.126 5.406-5.788A1.374 1.374 0 0 0 13.483 0zm-2.866 12.041a1.653 1.653 0 0 0-2.226 0l-2.939 3.141-2.939-3.141a1.653 1.653 0 0 0-2.226 0 1.653 1.653 0 0 0 0 2.226l3.854 4.126-5.406 5.788a1.374 1.374 0 0 0 .961 2.438h10.966a1.374 1.374 0 0 0 .961-.438l5.406-5.788-3.854-4.126a1.653 1.653 0 0 0-2.226 0z"/>
+                    </svg>
+                    <span className="text-sm">LeetCode</span>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Skills */}
+            {skills && skills.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {userPosts.filter(post => post.image).map((post) => (
-                    <div key={post.id} className="aspect-square rounded-lg overflow-hidden">
-                      <img
-                        src={post.image}
-                        alt="User photo"
-                        className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                      />
-                    </div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Skills</h2>
+                <div className="flex flex-wrap gap-2">
+                  {skills.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium"
+                    >
+                      {skill}
+                    </span>
                   ))}
                 </div>
               </div>
             )}
+          </div>
 
-            {/* About Tab */}
-            {activeTab === 'about' && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">About {userData.name}</h2>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Bio</h3>
-                    <p className="text-gray-700">{userData.bio}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Education</h3>
-                    <p className="text-gray-700">{userData.major} at Stanford University</p>
-                    <p className="text-gray-600 text-sm">Class of 2025 • {userData.year}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Contact Information</h3>
-                    <div className="space-y-2">
-                      <p className="text-gray-700">{userData.email}</p>
-                      <p className="text-gray-700">{userData.phone}</p>
-                      <p className="text-gray-700">{userData.location}</p>
-                    </div>
-                  </div>
-                </div>
+          {/* Right Content - Posts */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-6xl mb-4">📝</div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No recent activity</h3>
+                <p className="text-gray-600">Your activity will appear here</p>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-}
+} 

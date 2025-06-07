@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Home, 
   User, 
@@ -13,18 +13,57 @@ import {
   UserPlus
 } from 'lucide-react';
 import { useNavigate, NavLink } from "react-router-dom";
+import axios from 'axios';
 import profile_pic from "../assets/profile1.jpg";
 import logo from "../assets/nav-logo.png";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeItem, setActiveItem] = useState('Feed');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const user_id = 123;
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      const response = await axios.get('http://localhost:8000/api/v1/users/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      setUser(response.data.data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('accessToken');
+        setUser(null);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    setUser(null);
+    navigate('/login');
+  };
+
   const navigationItems = [
     { name: 'Feed', icon: Home, path: '/' },
-    { name: 'My Profile', icon: User, path: `/profile/${user_id}`},
+    { name: 'My Profile', icon: User, path: `/profile/${user?._id}`},
     { name: 'Messages', icon: MessageSquare, path: '/messages' },
     { name: 'Clubs', icon: Users, path: '/club' },
     { name: 'Events', icon: Calendar, path: '/event' },
@@ -36,6 +75,12 @@ export default function Navbar() {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  // Get user initials for avatar fallback
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const NavContent = () => (
@@ -94,27 +139,68 @@ export default function Navbar() {
       </nav>
 
       {/* Profile and Auth Section */}
-      <div className="p-4 border-t border-gray-100">
-        <div className="flex items-center space-x-3 mb-4">
-          <img
-            src={profile_pic}
-            alt="profile"
-            className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500"
-          />
-          <div>
-            <p className="text-sm font-medium text-gray-900">John Doe</p>
-            <p className="text-xs text-gray-500">john@example.com</p>
+      {user ? (
+        <div className="p-4 border-t border-gray-100">
+          <div className="flex items-center space-x-3 mb-4">
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.fullname}
+                className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className={`w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center border-2 border-indigo-500 ${user.avatar ? 'hidden' : ''}`}
+            >
+              <span className="text-white font-semibold text-sm">
+                {getInitials(user.fullname)}
+              </span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">{user.fullname}</p>
+              <p className="text-xs text-gray-500">{user.email}</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-all duration-200"
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              Log out
+            </button>
           </div>
         </div>
-        <div className="space-y-2">
-          <button
-            className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-all duration-200"
-          >
-            <LogOut className="w-5 h-5 mr-3" />
-            Log out
-          </button>
+      ) : (
+        <div className="p-4 border-t border-gray-100">
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                navigate('/login');
+                closeMobileMenu();
+              }}
+              className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-all duration-200"
+            >
+              <LogIn className="w-5 h-5 mr-3" />
+              Log in
+            </button>
+            <button
+              onClick={() => {
+                navigate('/signup');
+                closeMobileMenu();
+              }}
+              className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-all duration-200"
+            >
+              <UserPlus className="w-5 h-5 mr-3" />
+              Sign up
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
@@ -140,25 +226,50 @@ export default function Navbar() {
               />
             </div>
 
-            {/* Profile */}
-            <img
-              src={profile_pic}
-              alt="profile"
-              className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500 hover:scale-105 transition-transform"
-            />
-
-            <button className="bg-blue-800 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-blue-900 transition"
-                    onClick={() => navigate('/login')}
-            >
-              Log in
-            </button>
-
-            <button
-              className="bg-white text-blue-500 text-sm font-semibold px-4 py-2 rounded-full hover:bg-blue-900 hover:text-white transition border-2"
-              onClick={() => navigate('/signup')}
-            >
-              Sign up
-            </button>
+            {user ? (
+              <>
+                {/* Profile */}
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.fullname}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500 hover:scale-105 transition-transform"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div 
+                  className={`w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center border-2 border-indigo-500 hover:scale-105 transition-transform ${user.avatar ? 'hidden' : ''}`}
+                >
+                  <span className="text-white font-semibold text-sm">
+                    {getInitials(user.fullname)}
+                  </span>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="bg-red-500 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-red-600 transition"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  className="bg-blue-800 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-blue-900 transition"
+                  onClick={() => navigate('/login')}
+                >
+                  Log in
+                </button>
+                <button
+                  className="bg-white text-blue-500 text-sm font-semibold px-4 py-2 rounded-full hover:bg-blue-900 hover:text-white transition border-2"
+                  onClick={() => navigate('/signup')}
+                >
+                  Sign up
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -178,7 +289,7 @@ export default function Navbar() {
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 backdrop-blur-sm  z-40 md:hidden"
+          className="fixed inset-0 backdrop-blur-sm z-40 md:hidden"
           onClick={closeMobileMenu}
         />
       )}
