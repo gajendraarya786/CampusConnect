@@ -57,7 +57,7 @@ export default function Sidebar() {
     { name: 'Feed', icon: Home, path: '/' },
     { name: 'My Profile', icon: User, path: `/profile/${user?._id}`},
     { name: 'Messages', icon: MessageSquare, path: '/messages' },
-    { name: 'Clubs', icon: Users, path: '/club' },
+    { name: 'Clubs', icon: Users, path: '/clubs' },
     { name: 'Events', icon: Calendar, path: '/event' },
   ];
 

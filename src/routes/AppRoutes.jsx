@@ -5,7 +5,7 @@ import SignupForm from '../pages/SignupForm';
 import Feed from '../pages/Feed';
 import Profile from '../pages/Profile';
 import Messages from '../pages/Messages';
-import Club from '../pages/Club';
+import Clubs from '../pages/Clubs';
 import Events from '../pages/Events';
 import NotFound from '../pages/NotFound';
 // import { useAuth } from '../context/AuthContext'; // This line should be removed or commented out
@@ -37,7 +37,7 @@ export default function AppRoutes() {
       <Route path="/" element={<Feed />} />
       <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-      <Route path="/club" element={<Club />} />
+      <Route path="/clubs" element={<Clubs />} />
       <Route path="/event" element={<Events />} />
 
       {/* Public Routes - login/signup (redirect if logged in) */}
