@@ -8,6 +8,7 @@ import Messages from '../pages/Messages';
 import Clubs from '../pages/Clubs';
 import Events from '../pages/Events';
 import NotFound from '../pages/NotFound';
+import FriendList from '../pages/FriendList';
 // import { useAuth } from '../context/AuthContext'; // This line should be removed or commented out
 
 // Protected Route component (only for pages requiring auth to view/edit)
@@ -36,6 +37,7 @@ export default function AppRoutes() {
       {/* Public Routes for general viewing */}
       <Route path="/" element={<Feed />} />
       <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/friends" element={<ProtectedRoute><FriendList /></ProtectedRoute>} />
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/clubs" element={<Clubs />} />
       <Route path="/event" element={<Events />} />

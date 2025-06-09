@@ -9,14 +9,14 @@ function App() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar - hidden on mobile, visible on md and up */}
-      <div className="hidden md:block md:w-72 bg-white border-r border-gray-200">
+      <div className="hidden md:block w-72 border-r border-gray-200">
         <Sidebar />
       </div>
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-h-screen">
         <Navbar />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-gray-50">
           <AppRoutes />
         </main>
       </div>

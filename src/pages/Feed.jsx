@@ -1,6 +1,5 @@
-import Navbar from "../components/Navbar";
 import PostCard from "../components/PostCard";
-import Sidebar from "../components/Sidebar";
+
 
 
 export default function Feed(){
