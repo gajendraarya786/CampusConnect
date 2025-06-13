@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import api from '../services/api';
 
 // Custom Icons
@@ -38,85 +37,6 @@ const VerifiedIcon = () => (
     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
-
-// Sample Posts Data
-const samplePosts = [
-  {
-    id: 1,
-    user: {
-      name: "Sarah Chen",
-      username: "@sarahc",
-      avatar: "SC",
-      verified: true,
-      avatarColor: "from-purple-500 to-pink-500"
-    },
-    content: "Just finished my Computer Science project on machine learning! Feeling accomplished! 🎉",
-    image: null,
-    timestamp: "2 hours ago",
-    stats: { likes: 24, comments: 8, shares: 3 },
-    type: "text"
-  },
-  {
-    id: 2,
-    user: {
-      name: "Campus Photography",
-      username: "@campusphotos",
-      avatar: "CP",
-      verified: false,
-      avatarColor: "from-blue-500 to-teal-500"
-    },
-    content: "Golden hour at the university quad ✨ Perfect study spot with this amazing view!",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop&crop=center",
-    timestamp: "4 hours ago",
-    stats: { likes: 156, comments: 23, shares: 12 },
-    type: "image"
-  },
-  {
-    id: 3,
-    user: {
-      name: "Study Group Hub",
-      username: "@studygroups",
-      avatar: "SG",
-      verified: true,
-      avatarColor: "from-green-500 to-blue-500"
-    },
-    content: "📚 Study Group\n🕐 Tues/Thurs 6-8 PM\n📍 Library Room 204\nCovering calculus and linear algebra. Join us! 💪",
-    image: null,
-    timestamp: "6 hours ago",
-    stats: { likes: 89, comments: 34, shares: 45 },
-    type: "announcement"
-  }
-];
-
-const apiService = {
-  // Fetch logged-in user's profile
-  async getUserProfile() {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      throw new Error('No access token found. Please login.');
-    }
-
-    try {
-      const response = await api.get('/users/profile');
-      return response.data.data;
-    } catch (error) {
-      if (error.response?.status === 401) {
-        throw new Error('Session expired. Please login again.');
-      }
-      throw new Error(error.response?.data?.message || 'Failed to fetch profile');
-    }
-  },
-
-  // Fetch user by ID (public)
-  async getUserById(userId) {
-    try {
-      const response = await api.get(`/users/${userId}`);
-      return response.data.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch user');
-    }
-  }
-};
 
 const CreatePostModal = ({ isOpen, onClose, onPost }) => {
   const [formData, setFormData] = useState({
@@ -283,7 +203,7 @@ const CreatePostModal = ({ isOpen, onClose, onPost }) => {
             {previewImages.length > 0 && (
               <div className="grid grid-cols-4 gap-2 mt-2">
                 {previewImages.map((preview, index) => (
-                  <img key={index} src={preview} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+                  <img key={`image-preview-${index}`} src={preview} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
                 ))}
               </div>
             )}
@@ -301,7 +221,7 @@ const CreatePostModal = ({ isOpen, onClose, onPost }) => {
             {previewVideos.length > 0 && (
               <div className="grid grid-cols-4 gap-2 mt-2">
                 {previewVideos.map((preview, index) => (
-                  <video key={index} src={preview} className="w-full h-24 object-cover rounded-lg" controls />
+                  <video key={`video-preview-${index}`} src={preview} className="w-full h-24 object-cover rounded-lg" controls />
                 ))}
               </div>
             )}
@@ -334,7 +254,7 @@ export default function SocialMediaPostCards() {
   const [savedPosts, setSavedPosts] = useState(new Set());
   const [showComments, setShowComments] = useState(new Set());
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
-  const [posts, setPosts] = useState(samplePosts);
+  const [posts, setPosts] = useState([]); // Initialize as empty array
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -346,17 +266,28 @@ export default function SocialMediaPostCards() {
         setIsLoading(true);
         setError(null);
         
-        // Fetch user profile
-        const profile = await apiService.getUserProfile();
-        setUserProfile(profile);
+        // Fetch user profile directly using `api`
+        const profileResponse = await api.get('/users/profile');
+        setUserProfile(profileResponse.data.data);
 
-        // Fetch posts
-        const { data } = await api.get('/posts');
-        setPosts(data.data);
+        // Fetch posts directly using `api`
+        const postsResponse = await api.get('/posts');
+        setPosts(postsResponse.data.data);
+
+        // Initialize liked posts based on fetched data and user profile
+        if (profileResponse.data.data) {
+          const userLikedPostIds = new Set(
+            postsResponse.data.data
+              .filter(post => post.likes && post.likes.some(like => like.user === profileResponse.data.data._id))
+              .map(post => post._id)
+          );
+          setLikedPosts(userLikedPostIds);
+        }
+
       } catch (error) {
         console.error('Error fetching data:', error);
         setError(error.message);
-        if (error.message.includes('login')) {
+        if (error.response?.status === 401 || error.message.includes('login')) {
           // Redirect to login if token is missing or invalid
           window.location.href = '/login';
         }
@@ -366,12 +297,49 @@ export default function SocialMediaPostCards() {
     };
 
     fetchData();
-  }, []);
+  }, [userProfile?._id]); // Re-run if userProfile changes
 
-  const toggleStateSet = (stateSetter, currentSet, postId) => {
+  const toggleStateSet = async (stateSetter, currentSet, postId, type) => {
     const newSet = new Set(currentSet);
-    newSet.has(postId) ? newSet.delete(postId) : newSet.add(postId);
-    stateSetter(newSet);
+    const hasInteracted = newSet.has(postId);
+
+    if (type === 'like') {
+      try {
+        if (hasInteracted) {
+          // Unlike post
+          await api.delete(`/posts/${postId}/unlike`);
+          newSet.delete(postId);
+        } else {
+          // Like post
+          await api.post(`/posts/${postId}/like`);
+          newSet.add(postId);
+        }
+        stateSetter(newSet);
+
+        // Optimistically update the post's like count in the local state
+        setPosts(prevPosts =>
+          prevPosts.map(post => {
+            if (post._id === postId) {
+              const updatedLikes = hasInteracted
+                ? (post.likes || []).filter(like => like.user !== userProfile._id)
+                : [...(post.likes || []), { user: userProfile._id, likedAt: new Date().toISOString() }];
+              return {
+                ...post,
+                likes: updatedLikes
+              };
+            }
+            return post;
+          })
+        );
+      } catch (error) {
+        console.error(`Error toggling like for post ${postId}:`, error);
+        alert('Failed to update like status. Please try again.');
+      }
+    } else {
+      // For other toggles (e.g., comments, saves)
+      hasInteracted ? newSet.delete(postId) : newSet.add(postId);
+      stateSetter(newSet);
+    }
   };
 
   const handleNewPost = (newPost) => {
@@ -388,8 +356,8 @@ export default function SocialMediaPostCards() {
       content: newPost.content,
       images: newPost.images?.map(img => img.url || img) || [],
       videos: newPost.videos?.map(vid => vid.url || vid) || [],
-      timestamp: "Just now",
-      stats: { likes: 0, comments: 0, shares: 0 },
+      timestamp: "Just now", // This should ideally be derived from actual post creation time
+      stats: { likes: 0, comments: 0, shares: 0 }, // Initial stats, will be updated from backend
       type: newPost.images?.length ? "image" : "text"
     };
 
@@ -427,7 +395,7 @@ export default function SocialMediaPostCards() {
           <div className="flex space-x-3 text-indigo-600">
             {["photo", "event", "emoji"].map((type, idx) => (
               <button 
-                key={idx} 
+                key={`post-creator-button-${idx}`} // Added key prop
                 className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-indigo-50 transition-colors duration-200 text-lg"
                 onClick={() => setIsCreatePostModalOpen(true)}
                 title={`Add ${type}`}
@@ -467,7 +435,7 @@ export default function SocialMediaPostCards() {
           name: authorData.fullName || 'Unknown User',
           username: authorData.username || '@unknown',
           avatar: authorData.avatar,
-          avatarColor: `from-blue-500 to-purple-500`,
+          avatarColor: `from-blue-500 to-purple-500`, // Default color if not provided
           verified: authorData.verified || false,
         };
 
@@ -510,7 +478,7 @@ export default function SocialMediaPostCards() {
               <div className="grid grid-cols-1 gap-1 border-y border-gray-200">
                 {post.images.map((image, index) => (
                   <img 
-                    key={index}
+                    key={image.url || `image-${index}`} // Use image.url as key if available, fallback to index
                     src={image.url || image} // Handle both object format (url) and direct string URL
                     alt={`Post image ${index + 1}`}
                     className="w-full object-cover max-h-[450px] shadow-inner shadow-black/10"
@@ -519,9 +487,10 @@ export default function SocialMediaPostCards() {
               </div>
             )}
 
-            {/* Handle single image (for backward compatibility) */}
+            {/* Handle single image (for backward compatibility - assuming post.image is a string URL) */}
             {post.image && !post.images && (
               <img 
+                key={post.image} // Use image URL as key
                 src={post.image} 
                 alt="Post"
                 className="w-full object-cover max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
@@ -530,6 +499,7 @@ export default function SocialMediaPostCards() {
 
             {post.video && (
               <video 
+                key={post.video} // Use video URL as key
                 src={post.video} 
                 controls
                 className="w-full object-cover max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
@@ -537,7 +507,7 @@ export default function SocialMediaPostCards() {
             )}
 
             <div className="px-6 py-3 flex justify-between text-sm text-gray-600 border-t border-gray-200">
-              <span>{(post.likes?.length || 0) + (likedPosts.has(post._id) ? 1 : 0)} likes</span>
+              <span>{(post.likes?.length || 0)} likes</span>
               <span>{post.comments?.length || 0} comments</span>
               <span>0 shares</span>
             </div>
@@ -545,7 +515,7 @@ export default function SocialMediaPostCards() {
             <div className="px-4 py-3 border-t border-gray-200 flex justify-between items-center bg-gray-50 rounded-b-xl">
               <div className="flex space-x-2">
                 <button
-                  onClick={() => toggleStateSet(setLikedPosts, likedPosts, post._id)}
+                  onClick={() => toggleStateSet(setLikedPosts, likedPosts, post._id, 'like')}
                   className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${likedPosts.has(post._id) ? 'text-red-500 bg-red-100' : 'text-gray-600 hover:text-red-500 hover:bg-red-50'}`}
                 >
                   <HeartIcon filled={likedPosts.has(post._id)} />
@@ -553,7 +523,7 @@ export default function SocialMediaPostCards() {
                 </button>
 
                 <button
-                  onClick={() => toggleStateSet(setShowComments, showComments, post._id)}
+                  onClick={() => toggleStateSet(setShowComments, showComments, post._id, 'comment')}
                   className="flex items-center space-x-1.5 px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
                 >
                   <CommentIcon />
@@ -567,7 +537,7 @@ export default function SocialMediaPostCards() {
               </div>
 
               <button
-                onClick={() => toggleStateSet(setSavedPosts, savedPosts, post._id)}
+                onClick={() => toggleStateSet(setSavedPosts, savedPosts, post._id, 'save')}
                 className={`p-2 rounded-full transition-all duration-200 ${savedPosts.has(post._id) ? 'text-yellow-500 bg-yellow-100' : 'text-gray-600 hover:text-yellow-500 hover:bg-yellow-50'}`}
               >
                 <BookmarkIcon filled={savedPosts.has(post._id)} />
