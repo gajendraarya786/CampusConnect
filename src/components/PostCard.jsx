@@ -381,9 +381,9 @@ export default function SocialMediaPostCards() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 bg-gray-50 min-h-screen font-sans">
+    <div className="py-8 bg-gray-50 min-h-screen font-sans">
       {/* Post Creator */}
-      <div className="bg-white p-6 mb-8 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl">
+      <div className="bg-white py-6 px-0 md:px-10 mb-8 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl">
         <textarea
           placeholder="What's happening on campus today?"
           className="w-full resize-none text-base min-h-[90px] rounded-lg p-4 bg-gray-100 border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
@@ -395,7 +395,7 @@ export default function SocialMediaPostCards() {
           <div className="flex space-x-3 text-indigo-600">
             {["photo", "event", "emoji"].map((type, idx) => (
               <button 
-                key={`post-creator-button-${idx}`} // Added key prop
+                key={`post-creator-button-${idx}`}
                 className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-indigo-50 transition-colors duration-200 text-lg"
                 onClick={() => setIsCreatePostModalOpen(true)}
                 title={`Add ${type}`}
@@ -425,143 +425,143 @@ export default function SocialMediaPostCards() {
       />
 
       {/* Feed Posts */}
-      {posts.filter(Boolean).map((post) => {
-        console.log('DEBUG: Post object in map:', post);
-        console.log('DEBUG: post.author in map:', post.author);
+      <div className="grid grid-cols-1 gap-6 px-0 md:px-10">
+        {posts.filter(Boolean).map((post) => {
+          // Ensure post.author is an object, if not, provide a default
+          const authorData = post.author || {};
 
-        const authorData = post.author || {};
+          const displayUser = {
+            name: authorData.fullName || 'Unknown User',
+            username: authorData.username || '@unknown',
+            avatar: authorData.avatar,
+            avatarColor: `from-blue-500 to-purple-500`, // Default color if not provided
+            verified: authorData.verified || false,
+          };
 
-        const displayUser = {
-          name: authorData.fullName || 'Unknown User',
-          username: authorData.username || '@unknown',
-          avatar: authorData.avatar,
-          avatarColor: `from-blue-500 to-purple-500`, // Default color if not provided
-          verified: authorData.verified || false,
-        };
+          const initials = displayUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
 
-        const initials = displayUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
-
-        return (
-          <article key={post._id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-8 transform transition-all duration-300 hover:scale-[1.005] hover:shadow-xl">
-            <div className="p-6 flex justify-between items-start">
-              <div className="flex items-start space-x-4">
-                {displayUser.avatar ? (
-                  <img 
-                    src={displayUser.avatar}
-                    alt={displayUser.name}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-indigo-400 shadow-md"
-                  />
-                ) : (
-                  <div className={`w-14 h-14 rounded-full bg-gradient-to-r ${displayUser.avatarColor} flex items-center justify-center text-white font-semibold text-xl shadow-md`}>
-                    {initials}
+          return (
+            <article key={post._id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-8 transform transition-all duration-300 hover:scale-[1.005] hover:shadow-xl">
+              <div className="p-6 flex justify-between items-start">
+                <div className="flex items-start space-x-4">
+                  {displayUser.avatar ? (
+                    <img 
+                      src={displayUser.avatar}
+                      alt={displayUser.name}
+                      className="w-14 h-14 rounded-full object-cover border-2 border-indigo-400 shadow-md flex-shrink-0" // Added flex-shrink-0
+                    />
+                  ) : (
+                    <div className={`w-14 h-14 rounded-full bg-gradient-to-r ${displayUser.avatarColor} flex items-center justify-center text-white font-semibold text-xl shadow-md flex-shrink-0`}>
+                      {initials}
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h3 className="font-bold text-lg text-gray-900 group-hover:text-indigo-600 transition-colors duration-200">{displayUser.name}</h3>
+                      {displayUser.verified && <VerifiedIcon />}
+                    </div>
+                    <p className="text-sm text-gray-500">{displayUser.username} • {post.timestamp}</p>
                   </div>
-                )}
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <h3 className="font-bold text-lg text-gray-900 group-hover:text-indigo-600 transition-colors duration-200">{displayUser.name}</h3>
-                    {displayUser.verified && <VerifiedIcon />}
-                  </div>
-                  <p className="text-sm text-gray-500">{displayUser.username} • {post.timestamp}</p>
                 </div>
-              </div>
-              <button className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200">
-                <DotsIcon />
-              </button>
-            </div>
-
-            <div className="px-6 pb-4">
-              <p className="text-base text-gray-800 whitespace-pre-line leading-relaxed">{post.content}</p>
-            </div>
-
-            {/* Handle multiple images */}
-            {post.images && post.images.length > 0 && (
-              <div className="grid grid-cols-1 gap-1 border-y border-gray-200">
-                {post.images.map((image, index) => (
-                  <img 
-                    key={image.url || `image-${index}`} // Use image.url as key if available, fallback to index
-                    src={image.url || image} // Handle both object format (url) and direct string URL
-                    alt={`Post image ${index + 1}`}
-                    className="w-full object-cover max-h-[450px] shadow-inner shadow-black/10"
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Handle single image (for backward compatibility - assuming post.image is a string URL) */}
-            {post.image && !post.images && (
-              <img 
-                key={post.image} // Use image URL as key
-                src={post.image} 
-                alt="Post"
-                className="w-full object-cover max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
-              />
-            )}
-
-            {post.video && (
-              <video 
-                key={post.video} // Use video URL as key
-                src={post.video} 
-                controls
-                className="w-full object-cover max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
-              />
-            )}
-
-            <div className="px-6 py-3 flex justify-between text-sm text-gray-600 border-t border-gray-200">
-              <span>{(post.likes?.length || 0)} likes</span>
-              <span>{post.comments?.length || 0} comments</span>
-              <span>0 shares</span>
-            </div>
-
-            <div className="px-4 py-3 border-t border-gray-200 flex justify-between items-center bg-gray-50 rounded-b-xl">
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => toggleStateSet(setLikedPosts, likedPosts, post._id, 'like')}
-                  className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${likedPosts.has(post._id) ? 'text-red-500 bg-red-100' : 'text-gray-600 hover:text-red-500 hover:bg-red-50'}`}
-                >
-                  <HeartIcon filled={likedPosts.has(post._id)} />
-                  <span>Like</span>
+                <button className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200">
+                  <DotsIcon />
                 </button>
+              </div>
 
-                <button
-                  onClick={() => toggleStateSet(setShowComments, showComments, post._id, 'comment')}
-                  className="flex items-center space-x-1.5 px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
-                >
-                  <CommentIcon />
-                  <span>Comment</span>
-                </button>
+              <div className="px-6 pb-4">
+                <p className="text-base text-gray-800 whitespace-pre-line leading-relaxed">{post.content}</p>
+              </div>
 
-                <button className="flex items-center space-x-1.5 px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200">
-                  <ShareIcon />
+              {/* Handle multiple images */}
+              {post.images && post.images.length > 0 && (
+                <div className="grid grid-cols-1 gap-1 border-y border-gray-200">
+                  {post.images.map((image, index) => (
+                    <img 
+                      key={image.url || `image-${index}`} // Use image.url as key if available, fallback to index
+                      src={image.url || image} // Handle both object format (url) and direct string URL
+                      alt={`Post image ${index + 1}`}
+                      className="w-full object-cover max-h-[450px] shadow-inner shadow-black/10"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Handle single image (for backward compatibility - assuming post.image is a string URL) */}
+              {post.image && !post.images && (
+                <img 
+                  key={post.image} // Use image URL as key
+                  src={post.image} 
+                  alt="Post"
+                  className="w-full object-cover max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
+                />
+              )}
+
+              {post.video && (
+                <video 
+                  key={post.video} // Use video URL as key
+                  src={post.video} 
+                  controls
+                  className="w-full object-cover max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
+                />
+              )}
+
+              <div className="px-6 py-3 flex justify-between text-sm text-gray-600 border-t border-gray-200">
+                <span>{(post.likes?.length || 0)} likes</span>
+                <span>{post.comments?.length || 0} comments</span>
+                <span>0 shares</span>
+              </div>
+
+              <div className="px-4 py-3 border-t border-gray-200 flex justify-between items-center bg-gray-50 rounded-b-xl">
+                <div className="flex flex-wrap space-x-2">
+                  <button
+                    onClick={() => toggleStateSet(setLikedPosts, likedPosts, post._id, 'like')}
+                    className={`flex items-center space-x-1.5 px-2 py-2 rounded-full text-sm font-medium transition-all duration-200 ${likedPosts.has(post._id) ? 'text-red-500 bg-red-100' : 'text-gray-600 hover:text-red-500 hover:bg-red-50'}`}
+                  >
+                    <HeartIcon filled={likedPosts.has(post._id)} />
+                    <span>Like</span>
+                  </button>
+
+                  <button
+                    onClick={() => toggleStateSet(setShowComments, showComments, post._id, 'comment')}
+                    className="flex items-center space-x-1.5 px-2 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                  >
+                    <CommentIcon />
+                    <span>Comment</span>
+                  </button>
+
+                  <button className="flex items-center space-x-1.5 px-2 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200">
+                    <ShareIcon />
                   <span>Share</span>
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => toggleStateSet(setSavedPosts, savedPosts, post._id, 'save')}
+                  className={`p-2 rounded-full transition-all duration-200 ${savedPosts.has(post._id) ? 'text-yellow-500 bg-yellow-100' : 'text-gray-600 hover:text-yellow-500 hover:bg-yellow-50'}`}
+                >
+                  <BookmarkIcon filled={savedPosts.has(post._id)} />
                 </button>
               </div>
 
-              <button
-                onClick={() => toggleStateSet(setSavedPosts, savedPosts, post._id, 'save')}
-                className={`p-2 rounded-full transition-all duration-200 ${savedPosts.has(post._id) ? 'text-yellow-500 bg-yellow-100' : 'text-gray-600 hover:text-yellow-500 hover:bg-yellow-50'}`}
-              >
-                <BookmarkIcon filled={savedPosts.has(post._id)} />
-              </button>
-            </div>
-
-            {showComments.has(post._id) && (
-              <div className="px-6 py-4 border-t border-gray-200 bg-gray-100 rounded-b-xl">
-                <div className="flex space-x-4 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-base font-semibold shadow-md">
-                    You
+              {showComments.has(post._id) && (
+                <div className="px-6 py-4 border-t border-gray-200 bg-gray-100 rounded-b-xl">
+                  <div className="flex space-x-4 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-base font-semibold shadow-md">
+                      You
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Write a comment..."
+                      className="flex-1 bg-gray-200 border border-gray-300 rounded-full px-4 py-2.5 text-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Write a comment..."
-                    className="flex-1 bg-gray-200 border border-gray-300 rounded-full px-4 py-2.5 text-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
-                  />
+                  <div className="text-sm text-gray-600">No comments yet. Be the first to comment!</div>
                 </div>
-                <div className="text-sm text-gray-600">No comments yet. Be the first to comment!</div>
-              </div>
-            )}
-          </article>
-        );
-      })}
+              )}
+            </article>
+          );
+        })}
+      </div>
     </div>
   );
-} 
+}

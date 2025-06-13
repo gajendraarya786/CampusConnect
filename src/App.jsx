@@ -7,14 +7,14 @@ import Navbar from './components/Navbar';
 
 function App() {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-50 overflow-hidden">
       {/* Sidebar - hidden on mobile, visible on md and up */}
-      <div className="hidden md:block w-72 border-r border-gray-200">
+      <div className="hidden md:block w-72 border-r border-gray-200 flex-shrink-0 h-full">
         <Sidebar />
       </div>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col h-full w-full overflow-y-auto">
         <Navbar />
         <main className="flex-1 overflow-y-auto bg-gray-50">
           <AppRoutes />
