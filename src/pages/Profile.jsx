@@ -85,6 +85,11 @@ export default function Profile() {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [userPosts, setUserPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [postsError, setPostsError] = useState(null);
+
+
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
@@ -146,6 +151,31 @@ export default function Profile() {
   const handleRetry = () => {
     fetchUserProfile();
   };
+
+  const fetchUserPosts = async (userId) => {
+    try{
+      setPostsLoading(true);
+      const token = localStorage.getItem('accessToken');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const response =  await axios.get(`http://localhost:8000/api/v1/posts?userId=${userId}`, config);
+      setUserPosts(response.data.data);
+
+    }catch(error){
+       setPostsError("Failed to fetch posts");
+    }finally{
+      setPostsLoading(false);
+    }
+
+  }
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  useEffect(() => {
+    if (userData && userData._id) {
+      fetchUserPosts(userData._id);
+    }
+  }, [userData]);
 
   // Determine if the current profile is the logged-in user's own profile
   const getLoggedInUserId = () => {
@@ -380,18 +410,80 @@ export default function Profile() {
           </div>
 
           {/* Right Content - Posts */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-6xl mb-4">📝</div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No recent activity</h3>
-                <p className="text-gray-600">Your activity will appear here</p>
+       {/* Right Content - Posts */}
+<div className="lg:col-span-2">
+  <div className="bg-white rounded-lg shadow-sm p-6">
+    <h2 className="text-xl font-semibold text-gray-900 mb-6">Posts</h2>
+    {postsLoading ? (
+      <div className="text-center py-12">Loading posts...</div>
+    ) : postsError ? (
+      <div className="text-center py-12 text-red-500">{postsError}</div>
+    ) : userPosts.length === 0 ? (
+      <div className="text-center py-12">
+        <div className="text-gray-400 text-6xl mb-4">📝</div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No recent activity</h3>
+        <p className="text-gray-600">Your activity will appear here</p>
+      </div>
+    ) : (
+      <div className="space-y-8">
+        {userPosts.map(post => (
+          <div
+            key={post._id}
+            className="bg-white rounded-xl shadow-md border border-gray-200 p-6 transition-transform duration-200 hover:scale-[1.01]"
+          >
+            <div className="flex items-center mb-4">
+              {/* Avatar */}
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt={fullname}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-indigo-400 shadow"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow">
+                  {avatarInitials}
+                </div>
+              )}
+              <div className="ml-3">
+                <div className="font-semibold text-gray-900">{fullname}</div>
+                <div className="text-xs text-gray-500">
+                  {new Date(post.createdAt).toLocaleString()}
+                </div>
               </div>
             </div>
+            <h3 className="font-bold text-lg mb-2">{post.title}</h3>
+            <p className="text-gray-800 mb-3">{post.content}</p>
+            {/* Images grid */}
+            {post.images && post.images.length > 0 && (
+              <div className={`grid gap-2 mb-3 ${post.images.length === 1 ? 'grid-cols-1' : post.images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                {post.images.map((img, idx) => (
+                  <img
+                    key={img.url || idx}
+                    src={img.url}
+                    alt={img.alt || `Post image ${idx + 1}`}
+                    className="w-full h-48 object-contain rounded-lg shadow hover:scale-105 transition-transform duration-200"
+                  />
+                ))}
+              </div>
+            )}
+            {/* Post meta */}
+            <div className="flex items-center text-sm text-gray-500 mt-2">
+              <span className="mr-4 flex items-center">
+                <svg className="inline w-4 h-4 mr-1 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+                {post.images?.length || 0} images
+              </span>
+              {/* Add more meta info here, like likes/comments */}
+            </div>
           </div>
-        </div>
+        ))}
       </div>
+    )}
+    </div>
+    </div>
+    </div>
+    </div>
     </div>
   );
 } 

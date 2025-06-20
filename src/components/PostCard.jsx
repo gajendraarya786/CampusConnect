@@ -477,22 +477,22 @@ export default function SocialMediaPostCards() {
                 <div className="grid grid-cols-1 gap-1 border-y border-gray-200">
                   {post.images.map((image, index) => (
                     <img 
-                      key={image.url || `image-${index}`} // Use image.url as key if available, fallback to index
-                      src={image.url || image} // Handle both object format (url) and direct string URL
+                      key={image.url || `image-${index}`}
+                      src={image.url || image}
                       alt={`Post image ${index + 1}`}
-                      className="w-full object-cover max-h-[450px] shadow-inner shadow-black/10"
+                      className="w-full object-contain h-auto max-h-[450px] shadow-inner shadow-black/10"
                     />
                   ))}
                 </div>
               )}
 
-              {/* Handle single image (for backward compatibility - assuming post.image is a string URL) */}
+              {/* Handle single image (for backward compatibility) */}
               {post.image && !post.images && (
                 <img 
-                  key={post.image} // Use image URL as key
+                  key={post.image}
                   src={post.image} 
                   alt="Post"
-                  className="w-full object-cover max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
+                  className="w-full object-contain h-auto max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
                 />
               )}
 
