@@ -9,7 +9,7 @@ import Clubs from '../pages/Clubs';
 import Events from '../pages/Events';
 import NotFound from '../pages/NotFound';
 import FriendList from '../pages/FriendList';
-// import { useAuth } from '../context/AuthContext'; // This line should be removed or commented out
+import ProjectCollaboration from '../pages/ProjectCollaboration';
 
 // Protected Route component (only for pages requiring auth to view/edit)
 const ProtectedRoute = ({ children }) => {
@@ -39,6 +39,7 @@ export default function AppRoutes() {
       <Route path="/profile/:id" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/friends" element={<ProtectedRoute><FriendList /></ProtectedRoute>} />
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+      <Route path="/projects" element={<ProtectedRoute><ProjectCollaboration/></ProtectedRoute>} />
       <Route path="/clubs" element={<Clubs />} />
       <Route path="/event" element={<Events />} />
 
