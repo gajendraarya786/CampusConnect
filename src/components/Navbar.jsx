@@ -16,8 +16,8 @@ import {
 } from 'lucide-react';
 import { useNavigate, NavLink } from "react-router-dom";
 import axios from 'axios';
-import profile_pic from "../assets/profile1.jpg";
 import logo from "../assets/nav-logo.png";
+
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -65,10 +65,12 @@ export default function Navbar() {
 
   const navigationItems = [
     { name: 'Feed', icon: Home, path: '/' },
-    { name: 'My Profile', icon: User, path: `/profile/${user?._id}`},
-    { name: 'Messages', icon: MessageSquare, path: '/messages' },
-    { name: 'Clubs', icon: Users, path: '/clubs' },
-    { name: 'Events', icon: Calendar, path: '/event' },
+        { name: 'My Profile', icon: User, path: `/profile/${user?._id}`},
+        { name: 'Friends', icon: Users, path: '/friends' },
+        { name: 'Messages', icon: MessageSquare, path: '/messages' },
+        { name: 'Projects', icon: MessageSquare, path: '/projects'},
+        { name: 'Clubs', icon: Users, path: '/clubs' },
+        { name: 'Events', icon: Calendar, path: '/event' },
   ];
 
   const toggleMobileMenu = () => {

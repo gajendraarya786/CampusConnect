@@ -63,6 +63,7 @@ export default function Sidebar() {
     { name: 'Events', icon: Calendar, path: '/event' },
   ];
 
+
   // Get user initials for avatar fallback
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -79,7 +80,9 @@ export default function Sidebar() {
     );
   }
 
-  return (
+ return (
+  <>
+    {/* Desktop Sidebar */}
     <div className="hidden md:flex w-72 bg-white shadow-lg flex-col border-r border-gray-200 h-screen sticky top-0">
       {/* Logo Section */}
       <div className="p-6 border-b border-gray-100">
@@ -168,5 +171,28 @@ export default function Sidebar() {
         </div>
       </div>
     </div>
-  );
-} 
+
+    {/* Mobile Bottom Navigation */}
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 flex justify-around items-center py-2 md:hidden">
+      {navigationItems.map((item) => {
+        const Icon = item.icon;
+        return (
+          <NavLink
+            key={item.name}
+            to={item.path}
+            className={({ isActive }) =>
+              `flex flex-col items-center text-xs px-2 ${
+                isActive
+                  ? 'text-indigo-600'
+                  : 'text-gray-500 hover:text-indigo-600'
+              }`
+            }
+          >
+            <Icon className="w-6 h-6 mb-1" />
+            {item.name}
+          </NavLink>
+        );
+      })}
+    </div>
+  </>
+)};
