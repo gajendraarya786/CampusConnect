@@ -10,6 +10,9 @@ import Events from '../pages/Events';
 import NotFound from '../pages/NotFound';
 import FriendList from '../pages/FriendList';
 import ProjectCollaboration from '../pages/ProjectCollaboration';
+import RoommateDashboard from '../pages/RoommateDashboard';
+import RoommateProfileDetails from '../components/RoommateProfileDetails';
+
 
 // Protected Route component (only for pages requiring auth to view/edit)
 const ProtectedRoute = ({ children }) => {
@@ -40,6 +43,9 @@ export default function AppRoutes() {
       <Route path="/friends" element={<ProtectedRoute><FriendList /></ProtectedRoute>} />
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/projects" element={<ProtectedRoute><ProjectCollaboration/></ProtectedRoute>} />
+      <Route path="/roommates" element = {<ProtectedRoute><RoommateDashboard/></ProtectedRoute>} />
+      <Route path="/roommates/:id" element = {<ProtectedRoute><RoommateProfileDetails/></ProtectedRoute>} />
+      
       <Route path="/clubs" element={<Clubs />} />
       <Route path="/event" element={<Events />} />
 

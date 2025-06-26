@@ -67,6 +67,7 @@ export default function Navbar() {
     { name: 'Feed', icon: Home, path: '/' },
         { name: 'My Profile', icon: User, path: `/profile/${user?._id}`},
         { name: 'Friends', icon: Users, path: '/friends' },
+        { name: 'Roommates', icon: Users, path: '/roommates' },
         { name: 'Messages', icon: MessageSquare, path: '/messages' },
         { name: 'Projects', icon: MessageSquare, path: '/projects'},
         { name: 'Clubs', icon: Users, path: '/clubs' },

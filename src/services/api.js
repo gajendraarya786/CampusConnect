@@ -34,7 +34,38 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
+export const roommateAPI = {
+  // Get all roommate profiles
+  getAllProfiles: async () => {
+    const res = await api.get('/roommates/');
+    return res.data;
+  },
+  // Create or update my roommate profile
+  saveProfile: async (profile) => {
+    const res = await api.post('/roommates/profile', profile);
+    return res.data;
+  },
+  // Get my roommate profile
+  getMyProfile: async () => {
+    const res = await api.get('/roommates/profile');
+    return res.data;
+  },
+  // Get matches
+  getMatches: async () => {
+    const res = await api.get('/roommates/matches');
+    return res.data;
+  },
+  // Get roommate profile by ID
+  getProfileById: async (id) => {
+    const res = await api.get(`/roommates/${id}`);
+    return res.data;
+  },
+  // Delete my roommate profile
+  deleteProfile: async () => {
+    const res = await api.delete('/roommates/profile');
+    return res.data;
+  }
+};
 export default api; 
 
  
