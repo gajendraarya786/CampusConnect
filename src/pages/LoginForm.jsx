@@ -3,8 +3,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../store/authSlice"; // Adjust path if needed
 
-// Add error boundary component
+// Error boundary component
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -42,8 +44,6 @@ class ErrorBoundary extends React.Component {
 }
 
 export default function LoginForm() {
-  console.log('LoginForm component rendering'); // Debug log
-
   const [loginField, setLoginField] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -51,10 +51,10 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // Check if user is already logged in
   useEffect(() => {
-    console.log('LoginForm useEffect running'); // Debug log
     const token = localStorage.getItem('accessToken');
     if (token) {
       navigate('/');
@@ -90,17 +90,13 @@ export default function LoginForm() {
         ...(isEmail ? { email: loginField } : { username: loginField })
       };
 
-      console.log('Attempting login with:', { ...loginData, password: '***' }); // Debug log
-
       const response = await axios.post(
         "http://localhost:8000/api/v1/users/login",
         loginData,
         { withCredentials: true }
       );
 
-      console.log('Login response:', response.data); // Debug log
-
-      // Store tokens and user data
+      // Store tokens and user data in localStorage
       if (response.data?.data?.accessToken) {
         localStorage.setItem('accessToken', response.data.data.accessToken);
       }
@@ -111,21 +107,24 @@ export default function LoginForm() {
         localStorage.setItem('user', JSON.stringify(response.data.data.user));
       }
 
+      // Store in Redux
+      if (response.data?.data?.user && response.data?.data?.accessToken) {
+        dispatch(setCredentials({
+          user: response.data.data.user,
+          token: response.data.data.accessToken
+        }));
+      }
+
       // Show success message and start redirect
       toast.success('Login successful! Redirecting...');
       setIsRedirecting(true);
-      
-      // Add a small delay before redirect for better UX
       setTimeout(() => {
         navigate('/', { replace: true });
       }, 1000);
 
     } catch (error) {
-      console.error('Login error:', error); // Debug log
       let errorMessage = 'Login failed. Please try again.';
-      
       if (error.response) {
-        // Handle specific error cases
         switch (error.response.status) {
           case 401:
             errorMessage = 'Invalid email/username or password.';
@@ -147,7 +146,6 @@ export default function LoginForm() {
       } else if (error.message === 'Invalid response from server') {
         errorMessage = 'Server returned invalid response. Please try again.';
       }
-
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -155,7 +153,6 @@ export default function LoginForm() {
     }
   };
 
-  // Wrap the return statement with error boundary
   return (
     <ErrorBoundary>
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 px-4 sm:px-6 lg:px-8">
@@ -276,4 +273,4 @@ export default function LoginForm() {
       </div>
     </ErrorBoundary>
   );
-} 
+}

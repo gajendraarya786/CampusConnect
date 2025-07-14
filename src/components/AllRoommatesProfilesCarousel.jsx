@@ -82,7 +82,7 @@ export default function AllRoommateProfilesCarousel() {
             >
               {Array.from({ length: totalSlides }).map((_, slideIndex) => (
                 <div key={slideIndex} className="w-full flex-shrink-0">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-3 lg:p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 p-2 sm:p-3 lg:p-4">
                     {profiles.slice(slideIndex * itemsPerSlide, (slideIndex + 1) * itemsPerSlide).map((profile, idx) => (
                       <div
                         key={profile._id || idx}
