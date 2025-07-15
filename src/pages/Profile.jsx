@@ -81,15 +81,16 @@ const formatDate = (dateString) => {
 const Modal = ({ open, onClose, children }) => {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/10">
       <div
-        className="bg-white rounded-lg shadow-lg p-6 relative max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white border border-zinc-100 rounded-2xl shadow-2xl p-8 relative max-w-lg w-full max-h-[90vh] overflow-y-auto animate-fadeIn"
       >
         <button
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+          className="absolute top-3 right-3 text-zinc-400 hover:text-zinc-700 text-2xl font-bold focus:outline-none"
           onClick={onClose}
+          aria-label="Close"
         >
-          ✕
+          ×
         </button>
         {children}
       </div>
@@ -169,65 +170,69 @@ function EditProfileForm({ userData, onClose, onProfileUpdated }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-xl font-bold mb-2">Edit Profile</h2>
-      <div>
-        <label className="block font-medium">Full Name</label>
-        <input name="fullname" value={form.fullname} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <h2 className="text-2xl font-extrabold text-zinc-900 mb-4 text-center">Edit Profile</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block font-semibold text-zinc-700 mb-1">Full Name</label>
+          <input name="fullname" value={form.fullname} onChange={handleChange} className="w-full border border-zinc-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none bg-zinc-50" />
+        </div>
+        <div>
+          <label className="block font-semibold text-zinc-700 mb-1">Branch</label>
+          <input name="branch" value={form.branch} onChange={handleChange} className="w-full border border-zinc-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none bg-zinc-50" />
+        </div>
+        <div>
+          <label className="block font-semibold text-zinc-700 mb-1">Year</label>
+          <input name="year" value={form.year} onChange={handleChange} className="w-full border border-zinc-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none bg-zinc-50" />
+        </div>
+        <div>
+          <label className="block font-semibold text-zinc-700 mb-1">Email</label>
+          <input name="email" value={form.email} onChange={handleChange} className="w-full border border-zinc-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none bg-zinc-50" />
+        </div>
+        <div>
+          <label className="block font-semibold text-zinc-700 mb-1">Mobile</label>
+          <input name="mobile" value={form.mobile} onChange={handleChange} className="w-full border border-zinc-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none bg-zinc-50" />
+        </div>
+        <div>
+          <label className="block font-semibold text-zinc-700 mb-1">LinkedIn</label>
+          <input name="linkedIn" value={form.linkedIn} onChange={handleChange} className="w-full border border-zinc-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none bg-zinc-50" />
+        </div>
+        <div>
+          <label className="block font-semibold text-zinc-700 mb-1">GitHub</label>
+          <input name="github" value={form.github} onChange={handleChange} className="w-full border border-zinc-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none bg-zinc-50" />
+        </div>
+        <div>
+          <label className="block font-semibold text-zinc-700 mb-1">LeetCode</label>
+          <input name="leetcode" value={form.leetcode} onChange={handleChange} className="w-full border border-zinc-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none bg-zinc-50" />
+        </div>
       </div>
       <div>
-        <label className="block font-medium">Bio</label>
-        <textarea name="bio" value={form.bio} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+        <label className="block font-semibold text-zinc-700 mb-1">Bio</label>
+        <textarea name="bio" value={form.bio} onChange={handleChange} className="w-full border border-zinc-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none bg-zinc-50 min-h-[60px]" />
       </div>
       <div>
-        <label className="block font-medium">Branch</label>
-        <input name="branch" value={form.branch} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+        <label className="block font-semibold text-zinc-700 mb-1">Skills (comma separated)</label>
+        <input name="skills" value={form.skills} onChange={handleChange} className="w-full border border-zinc-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none bg-zinc-50" />
       </div>
-      <div>
-        <label className="block font-medium">Year</label>
-        <input name="year" value={form.year} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block font-semibold text-zinc-700 mb-1">Avatar</label>
+          <input type="file" accept="image/*" onChange={handleAvatarChange} className="block mt-1" />
+          {avatarPreview && (
+            <img src={avatarPreview} alt="Avatar Preview" className="w-16 h-16 rounded-full mt-2 border border-zinc-200 shadow" />
+          )}
+        </div>
+        <div>
+          <label className="block font-semibold text-zinc-700 mb-1">Cover Image</label>
+          <input type="file" accept="image/*" onChange={handleCoverChange} className="block mt-1" />
+          {coverPreview && (
+            <img src={coverPreview} alt="Cover Preview" className="w-full h-24 object-cover mt-2 rounded border border-zinc-200 shadow" />
+          )}
+        </div>
       </div>
-      <div>
-        <label className="block font-medium">Email</label>
-        <input name="email" value={form.email} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
-      </div>
-      <div>
-        <label className="block font-medium">Mobile</label>
-        <input name="mobile" value={form.mobile} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
-      </div>
-      <div>
-        <label className="block font-medium">LinkedIn</label>
-        <input name="linkedIn" value={form.linkedIn} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
-      </div>
-      <div>
-        <label className="block font-medium">GitHub</label>
-        <input name="github" value={form.github} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
-      </div>
-      <div>
-        <label className="block font-medium">LeetCode</label>
-        <input name="leetcode" value={form.leetcode} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
-      </div>
-      <div>
-        <label className="block font-medium">Skills (comma separated)</label>
-        <input name="skills" value={form.skills} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
-      </div>
-      <div>
-        <label className="block font-medium">Avatar</label>
-        <input type="file" accept="image/*" onChange={handleAvatarChange} className="block mt-1" />
-        {avatarPreview && (
-          <img src={avatarPreview} alt="Avatar Preview" className="w-16 h-16 rounded-full mt-2" />
-        )}
-      </div>
-      <div>
-        <label className="block font-medium">Cover Image</label>
-        <input type="file" accept="image/*" onChange={handleCoverChange} className="block mt-1" />
-        {coverPreview && (
-          <img src={coverPreview} alt="Cover Preview" className="w-full h-24 object-cover mt-2 rounded" />
-        )}
-      </div>
-      <div className="flex justify-end gap-2 mt-4">
-        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
-        <button type="submit" disabled={loading} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">{loading ? 'Saving...' : 'Save'}</button>
+      <div className="flex justify-end gap-3 mt-6">
+        <button type="button" onClick={onClose} className="px-5 py-2 rounded-lg border border-zinc-200 bg-zinc-100 text-zinc-700 font-semibold hover:bg-zinc-200 transition">Cancel</button>
+        <button type="submit" disabled={loading} className="px-6 py-2 rounded-lg bg-zinc-900 text-white font-semibold shadow hover:bg-zinc-800 transition disabled:opacity-60">{loading ? 'Saving...' : 'Save'}</button>
       </div>
     </form>
   );
@@ -363,104 +368,99 @@ export default function Profile() {
     leetcode = userData.leetcode || ''
   } = userData;
 
-  // Generate avatar initials if no avatar image
   const avatarInitials = getInitials(fullname);
   const joinDate = formatDate(createdAt);
-
-  // Default cover image
   const defaultCoverImage = "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&h=400&fit=crop";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-50">
       {/* Cover Photo & Profile Header */}
       <div className="relative">
         {/* Cover Image */}
-        <div className="h-64 bg-gradient-to-r from-blue-500 to-purple-600 relative overflow-hidden">
-          <img 
-            src={coverImage || defaultCoverImage} 
-            alt="Cover" 
-            className="w-full h-full object-cover cursor-pointer"
+        <div className="h-56 sm:h-64 bg-zinc-200 overflow-hidden rounded-t-xl">
+          <img
+            src={coverImage || defaultCoverImage}
+            alt="Cover"
+            className="w-full h-full object-cover"
             onClick={() => setShowCoverModal(true)}
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
+            onError={e => { e.target.style.display = 'none'; }}
           />
         </div>
 
-        {/* Profile Info */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative -mt-16 sm:-mt-20">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-6">
-              {/* Avatar */}
-              <div className="relative">
-                {avatar ? (
-                  <img
-                    src={avatar}
-                    alt={fullname}
-                    className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover cursor-pointer"
-                    onClick={() => setShowAvatarModal(true)}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div 
-                  className={`w-32 h-32 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg ${avatar ? 'hidden' : ''}`}
+        {/* Main Profile Card */}
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Avatar */}
+          <div className="absolute -top-16 left-8 sm:left-12 z-20">
+            <div className="relative">
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt={fullname}
+                  className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover bg-white"
+                  onClick={() => setShowAvatarModal(true)}
+                  onError={e => { e.target.style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-32 h-32 bg-zinc-300 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                  <span className="text-zinc-700 font-bold text-4xl">{avatarInitials}</span>
+                </div>
+              )}
+              {isOwnProfile && isAuthenticated && (
+                <button
+                  onClick={handleEditClick}
+                  className="absolute bottom-2 right-2 bg-white border border-zinc-200 rounded-full p-2 shadow hover:bg-zinc-100 transition"
                 >
-                  <span className="text-white font-bold text-4xl">{avatarInitials}</span>
-                </div>
-                {isOwnProfile && isAuthenticated && (
-                  <button 
-                    onClick={handleEditClick}
-                    className="absolute bottom-2 right-2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-50 transition"
-                  >
-                    <EditIcon />
-                  </button>
-                )}
-              </div>
+                  <EditIcon />
+                </button>
+              )}
+            </div>
+          </div>
 
-              {/* Name and Actions */}
-              <div className="flex-1 mt-6 sm:mt-0 sm:pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{fullname}</h1>
-                    <p className="text-gray-600">
-                      {username.startsWith('@') ? username : `@${username}`}
-                    </p>
-                  </div>
-                  {isOwnProfile && isAuthenticated && (
-                    <button
-                      onClick={() => setShowEditModal(true)}
-                      className="mt-4 sm:mt-0 px-6 py-2 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition flex items-center space-x-2"
-                    >
-                      <EditIcon />
-                      <span>Edit Profile</span>
-                    </button>
-                  )}
-                </div>
+          {/* Info Card */}
+          <div className="bg-white rounded-b-xl shadow p-6 pt-20 flex flex-col sm:flex-row sm:items-center sm:justify-between mt-0">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-extrabold text-zinc-900">{fullname}</span>
+                {/* Optionally, verified badge or pronouns */}
+              </div>
+              <div className="text-zinc-500 text-lg">@{username}</div>
+              {/* Optionally, add headline, location, etc. */}
+              <div className="text-zinc-600 mt-2">
+                {bio && <div>{bio}</div>}
+                {/* Example: <div>Dehradun, Uttarakhand, India</div> */}
               </div>
             </div>
+            {isOwnProfile && isAuthenticated && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="mt-4 sm:mt-0 px-6 py-2 bg-zinc-900 text-white border-none rounded-lg font-semibold shadow hover:bg-zinc-800 transition flex items-center space-x-2"
+              >
+                <EditIcon />
+                <span>Edit Profile</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Left Sidebar - Profile Info */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">About</h2>
-              <p className="text-gray-700 mb-4">{bio}</p>
-              
+          <div className="lg:col-span-1 space-y-8">
+            <div className="bg-white rounded-xl shadow p-8 mb-6 border border-zinc-100 hover:shadow-lg transition-all duration-300">
+              <h2 className="text-xl font-bold text-zinc-800 mb-4 flex items-center gap-2">
+                <span>About</span>
+                <span className="w-2 h-2 bg-zinc-400 rounded-full"></span>
+              </h2>
+              <p className="text-zinc-700 mb-4 leading-relaxed">{bio}</p>
               <div className="space-y-3">
-                <div className="flex items-center text-gray-600">
+                <div className="flex items-center text-zinc-500">
                   <CalendarIcon />
                   <span className="ml-2 text-sm">Joined {joinDate}</span>
                 </div>
                 {(branch || year) && (
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-zinc-500">
                     <BookIcon />
                     <span className="ml-2 text-sm">
                       {branch} {year && `• ${year}`}
@@ -468,13 +468,13 @@ export default function Profile() {
                   </div>
                 )}
                 {email && (
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-zinc-500">
                     <EmailIcon />
                     <span className="ml-2 text-sm">{email}</span>
                   </div>
                 )}
                 {mobile && (
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-zinc-500">
                     <PhoneIcon />
                     <span className="ml-2 text-sm">{mobile}</span>
                   </div>
@@ -483,15 +483,15 @@ export default function Profile() {
             </div>
 
             {/* Social Links */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Social Links</h2>
+            <div className="bg-white rounded-xl shadow p-8 mb-6 border border-zinc-100 hover:shadow-lg transition-all duration-300">
+              <h2 className="text-xl font-bold text-zinc-800 mb-4">Social Links</h2>
               <div className="space-y-3">
                 {linkedIn && (
                   <a 
                     href={linkedIn}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center text-gray-600 hover:text-indigo-600 transition"
+                    className="flex items-center text-zinc-500 hover:text-zinc-900 transition font-medium"
                   >
                     <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
@@ -504,7 +504,7 @@ export default function Profile() {
                     href={github}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center text-gray-600 hover:text-indigo-600 transition"
+                    className="flex items-center text-zinc-500 hover:text-zinc-900 transition font-medium"
                   >
                     <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -517,7 +517,7 @@ export default function Profile() {
                     href={leetcode}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center text-gray-600 hover:text-indigo-600 transition"
+                    className="flex items-center text-zinc-500 hover:text-zinc-900 transition font-medium"
                   >
                     <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M13.483 0a1.374 1.374 0 0 0-.961.438L7.116 6.226l-3.854 4.126a1.653 1.653 0 0 0 0 2.226 1.653 1.653 0 0 0 2.226 0l2.939-3.141 2.939 3.141a1.653 1.653 0 0 0 2.226 0 1.653 1.653 0 0 0 0-2.226l-3.854-4.126 5.406-5.788A1.374 1.374 0 0 0 13.483 0zm-2.866 12.041a1.653 1.653 0 0 0-2.226 0l-2.939 3.141-2.939-3.141a1.653 1.653 0 0 0-2.226 0 1.653 1.653 0 0 0 0 2.226l3.854 4.126-5.406 5.788a1.374 1.374 0 0 0 .961 2.438h10.966a1.374 1.374 0 0 0 .961-.438l5.406-5.788-3.854-4.126a1.653 1.653 0 0 0-2.226 0z"/>
@@ -530,13 +530,13 @@ export default function Profile() {
 
             {/* Skills */}
             {skills && skills.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Skills</h2>
-                <div className="flex flex-wrap gap-2">
+              <div className="bg-white rounded-xl shadow p-8 border border-zinc-100 hover:shadow-lg transition-all duration-300">
+                <h2 className="text-xl font-bold text-zinc-800 mb-4">Skills</h2>
+                <div className="flex flex-wrap gap-3">
                   {skills.map((skill, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium"
+                      className="px-4 py-1 bg-zinc-100 text-zinc-700 rounded-full text-sm font-semibold shadow hover:bg-zinc-200 transition"
                     >
                       {skill}
                     </span>
@@ -548,22 +548,22 @@ export default function Profile() {
 
           {/* Right Content - Posts */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-6xl mb-4">📝</div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No recent activity</h3>
-                <p className="text-gray-600">Your activity will appear here</p>
+            <div className="bg-white rounded-xl shadow p-10 border border-zinc-100 hover:shadow-lg transition-all duration-300">
+              <h2 className="text-2xl font-extrabold text-zinc-800 mb-8 tracking-tight">Recent Activity</h2>
+              <div className="text-center py-16">
+                <div className="text-zinc-300 text-7xl mb-4">📝</div>
+                <h3 className="text-xl font-semibold text-zinc-900 mb-2">No recent activity</h3>
+                <p className="text-zinc-500">Your activity will appear here</p>
               </div>
             </div>
           </div>
         </div>
       </div>
       <Modal open={showAvatarModal} onClose={() => setShowAvatarModal(false)}>
-        <img src={avatar || defaultCoverImage} alt="Profile" className="w-full h-auto rounded-lg" />
+        <img src={avatar || defaultCoverImage} alt="Profile" className="w-full h-auto rounded-xl shadow" />
       </Modal>
       <Modal open={showCoverModal} onClose={() => setShowCoverModal(false)}>
-        <img src={coverImage || defaultCoverImage} alt="Cover" className="w-full h-auto rounded-lg" />
+        <img src={coverImage || defaultCoverImage} alt="Cover" className="w-full h-auto rounded-xl shadow" />
       </Modal>
       <Modal open={showEditModal} onClose={() => setShowEditModal(false)}>
         <EditProfileForm
