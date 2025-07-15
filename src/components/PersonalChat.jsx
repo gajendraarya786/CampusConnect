@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
-import { Send, MoreVertical, ArrowLeft } from 'lucide-react';
+import { Send, MoreVertical, ArrowLeft, Trash2 } from 'lucide-react';
 
 const socket = io('http://localhost:8000', { withCredentials: true });
 
@@ -11,7 +11,7 @@ function formatTime(ts) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function PersonalChat({ userId, otherUserId, token, otherUserName, onBack }) {
+function PersonalChat({ userId, otherUserId, token, otherUserName, onBack, onDeleteChat }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
@@ -90,9 +90,20 @@ function PersonalChat({ userId, otherUserId, token, otherUserName, onBack }) {
             <p className="text-xs sm:text-sm text-green-500">Online</p>
           </div>
         </div>
-        <button className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0">
-          <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-        </button>
+        <div className="flex items-center space-x-2">
+          {onDeleteChat && (
+            <button
+              onClick={onDeleteChat}
+              className="p-2 hover:bg-red-100 rounded-full transition-colors flex-shrink-0"
+              title="Delete chat"
+            >
+              <Trash2 className="w-5 h-5 text-red-500" />
+            </button>
+          )}
+          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0">
+            <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+          </button>
+        </div>
       </div>
 
       {/* Messages Area */}
@@ -165,4 +176,4 @@ function PersonalChat({ userId, otherUserId, token, otherUserName, onBack }) {
   );
 }
 
-export default PersonalChat;
+export default PersonalChat; 

@@ -18,12 +18,15 @@ import { useNavigate, NavLink } from "react-router-dom";
 import axios from 'axios';
 import logo from "../assets/nav-logo.png";
 
-
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeItem, setActiveItem] = useState('Feed');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -63,15 +66,43 @@ export default function Navbar() {
     navigate('/login');
   };
 
+  const handleSearchChange = async (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (value.trim().length === 0) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
+    }
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await axios.get(`http://localhost:8000/api/v1/users?search=${value}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSearchResults(res.data.data || []);
+      setShowSearchDropdown(true);
+    } catch (err) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+    }
+  };
+
+  const handleUserClick = (userId) => {
+    navigate(`/profile/${userId}`);
+    setSearchTerm('');
+    setSearchResults([]);
+    setShowSearchDropdown(false);
+  };
+
   const navigationItems = [
     { name: 'Feed', icon: Home, path: '/' },
-        { name: 'My Profile', icon: User, path: `/profile/${user?._id}`},
-        { name: 'Friends', icon: Users, path: '/friends' },
-        { name: 'Roommates', icon: Users, path: '/roommates' },
-        { name: 'Messages', icon: MessageSquare, path: '/messages' },
-        { name: 'Projects', icon: MessageSquare, path: '/projects'},
-        { name: 'Clubs', icon: Users, path: '/clubs' },
-        { name: 'Events', icon: Calendar, path: '/event' },
+    { name: 'My Profile', icon: User, path: `/profile/${user?._id}`},
+    { name: 'Friends', icon: Users, path: '/friends' },
+    { name: 'Roommates', icon: Users, path: '/roommates' },
+    { name: 'Messages', icon: MessageSquare, path: '/messages' },
+    { name: 'Projects', icon: MessageSquare, path: '/projects'},
+    { name: 'Clubs', icon: Users, path: '/clubs' },
+    { name: 'Events', icon: Calendar, path: '/event' },
   ];
 
   const toggleMobileMenu = () => {
@@ -103,13 +134,37 @@ export default function Navbar() {
 
       {/* Search Bar */}
       <div className="p-4 border-b border-gray-100">
-        <div className="flex items-center bg-gray-50 px-3 py-2 rounded-lg">
+        <div className="relative flex items-center bg-gray-50 px-3 py-2 rounded-lg">
           <Search className="w-4 h-4 text-gray-500" />
           <input
             type="text"
-            placeholder="Search..."
-            className="bg-transparent focus:outline-none text-sm px-2 w-full text-gray-700"
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            onFocus={() => searchResults.length > 0 && setShowSearchDropdown(true)}
+            className="bg-transparent focus:outline-none text-sm px-3 w-full text-gray-800 placeholder-gray-500"
           />
+          {showSearchDropdown && searchResults.length > 0 && (
+            <div className="absolute left-0 top-12 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+              {searchResults.map(u => (
+                <div
+                  key={u._id}
+                  className="flex items-center px-4 py-2 hover:bg-indigo-50 cursor-pointer"
+                  onClick={() => handleUserClick(u._id)}
+                >
+                  <img
+                    src={u.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.fullname)}
+                    alt={u.fullname}
+                    className="w-8 h-8 rounded-full object-cover mr-3"
+                  />
+                  <div>
+                    <div className="font-medium text-gray-900">{u.fullname}</div>
+                    <div className="text-xs text-gray-500">{u.email}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -147,26 +202,31 @@ export default function Navbar() {
 
       {/* Profile and Auth Section */}
       {user ? (
-        <div className="p-4 border-t border-gray-100">
+        <div className="px-6 pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-3 mb-4">
-            {user.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.fullname}
-                className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-            ) : null}
-            <div 
-              className={`w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center border-2 border-indigo-500 ${user.avatar ? 'hidden' : ''}`}
+            <button
+              onClick={() => navigate(`/profile/${user._id}`)}
+              className="focus:outline-none"
+              title="My Profile"
             >
-              <span className="text-white font-semibold text-sm">
-                {getInitials(user.fullname)}
-              </span>
-            </div>
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.fullname}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500 hover:scale-105 transition-transform shadow-md"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center border-2 border-indigo-500 hover:scale-105 transition-transform shadow-md">
+                  <span className="text-white font-semibold text-sm">
+                    {getInitials(user.fullname)}
+                  </span>
+                </div>
+              )}
+            </button>
             <div>
               <p className="text-sm font-medium text-gray-900">{user.fullname}</p>
               <p className="text-xs text-gray-500">{user.email}</p>
@@ -190,6 +250,7 @@ export default function Navbar() {
             <button
               className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-all duration-200"
               title="Settings"
+              onClick={() => setSettingsOpen(true)}
             >
               <Settings className="w-5 h-5 mr-3" />
               Settings
@@ -248,9 +309,33 @@ export default function Navbar() {
               </div>
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onFocus={() => searchResults.length > 0 && setShowSearchDropdown(true)}
                 className="w-72 pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
               />
+              {showSearchDropdown && searchResults.length > 0 && (
+                <div className="absolute left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                  {searchResults.map(u => (
+                    <div
+                      key={u._id}
+                      className="flex items-center px-4 py-2 hover:bg-indigo-50 cursor-pointer"
+                      onClick={() => handleUserClick(u._id)}
+                    >
+                      <img
+                        src={u.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.fullname)}
+                        alt={u.fullname}
+                        className="w-8 h-8 rounded-full object-cover mr-3"
+                      />
+                      <div>
+                        <div className="font-medium text-gray-900">{u.fullname}</div>
+                        <div className="text-xs text-gray-500">{u.email}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {user ? (
@@ -264,28 +349,34 @@ export default function Navbar() {
                 <button
                   className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-all duration-200"
                   title="Settings"
+                  onClick={() => setSettingsOpen(true)}
                 >
                   <Settings className="w-5 h-5" />
                 </button>
                 {/* Profile */}
-                {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.fullname}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500 hover:scale-105 transition-transform shadow-md"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div 
-                  className={`w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center border-2 border-indigo-500 hover:scale-105 transition-transform shadow-md ${user.avatar ? 'hidden' : ''}`}
+                <button
+                  onClick={() => navigate(`/profile/${user._id}`)}
+                  className="focus:outline-none"
+                  title="My Profile"
                 >
-                  <span className="text-white font-semibold text-sm">
-                    {getInitials(user.fullname)}
-                  </span>
-                </div>
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.fullname}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500 hover:scale-105 transition-transform shadow-md"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center border-2 border-indigo-500 hover:scale-105 transition-transform shadow-md">
+                      <span className="text-white font-semibold text-sm">
+                        {getInitials(user.fullname)}
+                      </span>
+                    </div>
+                  )}
+                </button>
                 <button 
                   onClick={handleLogout}
                   className="bg-red-500 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-200"
@@ -341,6 +432,27 @@ export default function Navbar() {
       >
         <NavContent />
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   );
 } 
+
+function SettingsModal({ open, onClose }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md relative">
+        <button
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+          onClick={onClose}
+        >
+          <X className="w-6 h-6" />
+        </button>
+        <h2 className="text-xl font-bold mb-4">Settings</h2>
+        <p className="text-gray-500">Settings content goes here...</p>
+      </div>
+    </div>
+  );
+}

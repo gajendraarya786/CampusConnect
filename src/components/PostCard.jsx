@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 
 // Custom Icons
@@ -249,6 +249,250 @@ const CreatePostModal = ({ isOpen, onClose, onPost }) => {
   );
 };
 
+// Utility hook for detecting clicks outside an element
+function useClickOutside(ref, handler) {
+  React.useEffect(() => {
+    const listener = (event) => {
+      if (!ref.current || ref.current.contains(event.target)) {
+        return;
+      }
+      handler(event);
+    };
+    document.addEventListener('mousedown', listener);
+    return () => {
+      document.removeEventListener('mousedown', listener);
+    };
+  }, [ref, handler]);
+}
+
+function PostCard({
+  post,
+  displayUser,
+  initials,
+  savedPosts,
+  toggleStateSet,
+  setSavedPosts,
+  openDropdownId,
+  setOpenDropdownId,
+  likedPosts,
+  setLikedPosts,
+  showComments,
+  setShowComments,
+  commentInputs,
+  setCommentInputs,
+  comments,
+  setComments,
+  commentLoading,
+  setCommentLoading,
+  handleToggleComments,
+  handleCommentInput,
+  handlePostComment,
+  handleShare,
+  shareTo,
+  userProfile,
+  handleDeletePost,
+  handleDeleteComment
+}) {
+  const dropdownRef = useRef(null);
+  useClickOutside(dropdownRef, () => {
+    if (openDropdownId === post._id) setOpenDropdownId(null);
+  });
+
+  return (
+    <article key={post._id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-6 sm:mb-8 transform transition-all duration-300 hover:scale-[1.005] hover:shadow-xl">
+      <div className="p-4 sm:p-6 flex flex-col gap-2 sm:gap-0">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
+            {displayUser.avatar ? (
+              <img 
+                src={displayUser.avatar}
+                alt={displayUser.name}
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-indigo-400 shadow-md"
+              />
+            ) : (
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r ${displayUser.avatarColor} flex items-center justify-center text-white font-semibold text-lg sm:text-xl shadow-md`}>
+                {initials}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-2">
+                <h3 className="font-bold text-base sm:text-lg text-gray-900 group-hover:text-indigo-600 transition-colors duration-200 truncate">{displayUser.name}</h3>
+                {displayUser.verified && <VerifiedIcon />}
+              </div>
+              <p className="text-xs sm:text-sm text-gray-500 truncate">{displayUser.username} • {post.timestamp}</p>
+            </div>
+          </div>
+          {/* 3-dots button and dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+              onClick={() => setOpenDropdownId(openDropdownId === post._id ? null : post._id)}
+              aria-label="Post options"
+            >
+              <DotsIcon />
+            </button>
+            {openDropdownId === post._id && (
+              <div className="absolute right-0 mt-2 z-20 bg-white border border-gray-200 rounded shadow-lg p-2 min-w-[160px]">
+                <button
+                  onClick={() => {
+                    toggleStateSet(setSavedPosts, savedPosts, post._id, 'save');
+                    setOpenDropdownId(null);
+                  }}
+                  className="block w-full text-left px-3 py-1 hover:bg-gray-100 text-sm text-gray-700"
+                >
+                  {savedPosts.has(post._id) ? 'Unsave Post' : 'Save Post'}
+                </button>
+                {/* Delete Post option, only for author */}
+                {userProfile?._id && (userProfile._id === (post.author?._id || post.author)) && (
+                  <button
+                    onClick={() => {
+                      handleDeletePost(post._id);
+                      setOpenDropdownId(null);
+                    }}
+                    className="block w-full text-left px-3 py-1 hover:bg-gray-100 text-sm text-red-600"
+                  >
+                    Delete Post
+                  </button>
+                )}
+                {/* Add more menu items here if needed */}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="px-4 sm:px-6 pb-3 sm:pb-4">
+          <p className="text-sm sm:text-base text-gray-800 whitespace-pre-line leading-relaxed break-words">{post.content}</p>
+        </div>
+        {/* Handle multiple images */}
+        {post.images && post.images.length > 0 && (
+          <div className="grid grid-cols-1 gap-1 border-y border-gray-200">
+            {post.images.map((image, index) => (
+              <img 
+                key={image.url || `image-${index}`}
+                src={image.url || image}
+                alt={`Post image ${index + 1}`}
+                className="w-full object-cover max-h-[250px] sm:max-h-[450px] shadow-inner shadow-black/10"
+              />
+            ))}
+          </div>
+        )}
+        {/* Handle single image (for backward compatibility) */}
+        {post.image && !post.images && (
+          <img 
+            key={post.image}
+            src={post.image} 
+            alt="Post"
+            className="w-full object-cover max-h-[250px] sm:max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
+          />
+        )}
+        {post.video && (
+          <video 
+            key={post.video}
+            src={post.video} 
+            controls
+            className="w-full object-cover max-h-[250px] sm:max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
+          />
+        )}
+        <div className="px-2 sm:px-4 py-2 sm:py-3 flex flex-row items-center justify-between text-xs sm:text-sm text-gray-600 border-t border-gray-200 gap-4">
+          <span>{(post.likes?.length || 0)} likes</span>
+          <span>{post.comments?.length || 0} comments</span>
+          <span>0 shares</span>
+        </div>
+        <div className="px-2 sm:px-4 py-2 sm:py-3 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center bg-gray-50 rounded-b-xl gap-2 sm:gap-0">
+          <div className="flex space-x-2 w-full sm:w-auto justify-center sm:justify-start">
+            <button
+              onClick={() => toggleStateSet(setLikedPosts, likedPosts, post._id, 'like')}
+              className={`flex items-center space-x-1.5 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${likedPosts.has(post._id) ? 'text-red-500 bg-red-100' : 'text-gray-600 hover:text-red-500 hover:bg-red-50'}`}
+            >
+              <HeartIcon filled={likedPosts.has(post._id)} />
+              <span>Like</span>
+            </button>
+            <button
+              onClick={() => handleToggleComments(post._id)}
+              className="flex items-center space-x-1.5 px-2 py-2 rounded-full text-xs sm:text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+            >
+              <CommentIcon />
+              <span>Comment</span>
+            </button>
+            <div className="relative group">
+              <button
+                onClick={() => handleShare(post._id)}
+                className="flex items-center space-x-1.5 px-2 py-2 rounded-full text-xs sm:text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
+              >
+                <ShareIcon />
+                <span>Share</span>
+              </button>
+              {/* Share dropdown on hover */}
+              <div className="absolute left-0 mt-2 z-10 hidden group-hover:block bg-white border border-gray-200 rounded shadow-lg p-2 min-w-[140px]">
+                <button onClick={() => handleShare(post._id)} className="block w-full text-left px-3 py-1 hover:bg-gray-100 text-sm">Copy Link</button>
+                <button onClick={() => shareTo('whatsapp', post._id)} className="block w-full text-left px-3 py-1 hover:bg-gray-100 text-sm">WhatsApp</button>
+                <button onClick={() => shareTo('twitter', post._id)} className="block w-full text-left px-3 py-1 hover:bg-gray-100 text-sm">Twitter</button>
+                <button onClick={() => shareTo('facebook', post._id)} className="block w-full text-left px-3 py-1 hover:bg-gray-100 text-sm">Facebook</button>
+              </div>
+            </div>
+          </div>
+          {/* Removed separate bookmark button; now in 3-dots menu */}
+        </div>
+        {showComments.has(post._id) && (
+          <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-100 rounded-b-xl">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-3 sm:mb-4">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-base font-semibold shadow-md">
+                You
+              </div>
+              <input
+                type="text"
+                placeholder="Write a comment..."
+                value={commentInputs[post._id] || ''}
+                onChange={e => handleCommentInput(post._id, e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handlePostComment(post._id); }}
+                className="flex-1 bg-gray-200 border border-gray-300 rounded-full px-3 sm:px-4 py-2 text-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+              />
+              <button
+                onClick={() => handlePostComment(post._id)}
+                className="sm:ml-2 px-3 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition mt-2 sm:mt-0"
+              >
+                Post
+              </button>
+            </div>
+            {commentLoading[post._id] ? (
+              <div className="text-xs sm:text-sm text-gray-500">Loading comments...</div>
+            ) : (
+              <div className="space-y-2">
+                {(comments[post._id] || []).length === 0 ? (
+                  <div className="text-xs sm:text-sm text-gray-600">No comments yet. Be the first to comment!</div>
+                ) : (
+                  comments[post._id].map((c, idx) => (
+                    <div key={c._id || idx} className="flex items-start space-x-2 sm:space-x-3">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold shadow-md">
+                        {c.user?.fullname?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-800 text-xs sm:text-sm">{c.user?.fullname || 'User'}
+                         {/* Delete comment button, only for author */}
+                         {userProfile?._id && (c.user?._id === userProfile._id) && (
+                           <button
+                             onClick={() => handleDeleteComment(post._id, c._id)}
+                             className="ml-2 text-xs text-red-500 hover:text-red-700"
+                             title="Delete comment"
+                           >
+                             🗑️
+                           </button>
+                         )}
+                        </div>
+                        <div className="text-gray-700 text-xs sm:text-sm">{c.content}</div>
+                        <div className="text-[10px] sm:text-xs text-gray-400">{new Date(c.createdAt).toLocaleString()}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
+
 export default function SocialMediaPostCards() {
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [savedPosts, setSavedPosts] = useState(new Set());
@@ -261,6 +505,7 @@ export default function SocialMediaPostCards() {
   const [commentInputs, setCommentInputs] = useState({});
   const [comments, setComments] = useState({}); // { postId: [comments] }
   const [commentLoading, setCommentLoading] = useState({});
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   // Fetch user profile and posts on component mount
   useEffect(() => {
@@ -408,7 +653,7 @@ export default function SocialMediaPostCards() {
     if (!text?.trim()) return;
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await api.post(`/posts/${postId}/comments`, { content: text }, {
+      const response = await api.post(`/${postId}/comments`, { content: text }, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -446,6 +691,31 @@ export default function SocialMediaPostCards() {
     window.open(shareUrl, '_blank');
   };
 
+  // Delete Post Handler
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    try {
+      await api.delete(`/posts/${postId}`);
+      setPosts(posts => posts.filter(p => p._id !== postId));
+    } catch (err) {
+      alert("Failed to delete post");
+    }
+  };
+
+  // Delete Comment Handler
+  const handleDeleteComment = async (postId, commentId) => {
+    if (!window.confirm("Delete this comment?")) return;
+    try {
+      await api.delete(`/posts/${postId}/comments/${commentId}`);
+      setComments(prev => ({
+        ...prev,
+        [postId]: (prev[postId] || []).filter(c => c._id !== commentId)
+      }));
+    } catch (err) {
+      alert("Failed to delete comment");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-2 flex items-center justify-center min-h-screen">
@@ -463,17 +733,17 @@ export default function SocialMediaPostCards() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8 bg-gray-50 min-h-screen font-sans">
+    <div className="max-w-4xl mx-auto px-2 sm:px-4 py-6 sm:py-8 lg:px-8 bg-gray-50 min-h-screen font-sans">
       {/* Post Creator */}
-      <div className="bg-white p-6 mb-8 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl">
+      <div className="bg-white p-4 sm:p-6 mb-6 sm:mb-8 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl">
         <textarea
           placeholder="What's happening on campus today?"
-          className="w-full resize-none text-base min-h-[90px] rounded-lg p-4 bg-gray-100 border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+          className="w-full resize-none text-base min-h-[90px] rounded-lg p-3 sm:p-4 bg-gray-100 border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
           rows="3"
           onClick={() => setIsCreatePostModalOpen(true)}
           readOnly
         />
-        <div className="flex items-center justify-between mt-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 sm:mt-5 gap-3 sm:gap-0">
           <div className="flex space-x-3 text-indigo-600">
             {["photo", "event", "emoji"].map((type, idx) => (
               <button 
@@ -491,7 +761,7 @@ export default function SocialMediaPostCards() {
             ))}
           </div>
           <button 
-            className="bg-indigo-600 text-white px-7 py-2.5 rounded-full font-semibold hover:bg-indigo-700 transition-transform duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+            className="bg-indigo-600 text-white px-5 sm:px-7 py-2 sm:py-2.5 rounded-full font-semibold hover:bg-indigo-700 transition-transform duration-200 transform hover:scale-105 shadow-md hover:shadow-lg w-full sm:w-auto"
             onClick={() => setIsCreatePostModalOpen(true)}
           >
             Post
@@ -508,184 +778,46 @@ export default function SocialMediaPostCards() {
 
       {/* Feed Posts */}
       {posts.filter(Boolean).map((post) => {
-        console.log('DEBUG: Post object in map:', post);
-        console.log('DEBUG: post.author in map:', post.author);
-
         const authorData = post.author || {};
-
         const displayUser = {
-          name: authorData.fullName || 'Unknown User',
+          name: authorData.fullName || authorData.fullname || 'Unknown User',
           username: authorData.username || '@unknown',
           avatar: authorData.avatar,
-          avatarColor: `from-blue-500 to-purple-500`, // Default color if not provided
+          avatarColor: `from-blue-500 to-purple-500`,
           verified: authorData.verified || false,
         };
-
         const initials = displayUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
-
         return (
-          <article key={post._id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-8 transform transition-all duration-300 hover:scale-[1.005] hover:shadow-xl">
-            <div className="p-6 flex justify-between items-start">
-              <div className="flex items-start space-x-4">
-                {displayUser.avatar ? (
-                  <img 
-                    src={displayUser.avatar}
-                    alt={displayUser.name}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-indigo-400 shadow-md"
-                  />
-                ) : (
-                  <div className={`w-14 h-14 rounded-full bg-gradient-to-r ${displayUser.avatarColor} flex items-center justify-center text-white font-semibold text-xl shadow-md`}>
-                    {initials}
-                  </div>
-                )}
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <h3 className="font-bold text-lg text-gray-900 group-hover:text-indigo-600 transition-colors duration-200">{displayUser.name}</h3>
-                    {displayUser.verified && <VerifiedIcon />}
-                  </div>
-                  <p className="text-sm text-gray-500">{displayUser.username} • {post.timestamp}</p>
-                </div>
-              </div>
-              <button className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200">
-                <DotsIcon />
-              </button>
-            </div>
-
-            <div className="px-6 pb-4">
-              <p className="text-base text-gray-800 whitespace-pre-line leading-relaxed">{post.content}</p>
-            </div>
-
-            {/* Handle multiple images */}
-            {post.images && post.images.length > 0 && (
-              <div className="grid grid-cols-1 gap-1 border-y border-gray-200">
-                {post.images.map((image, index) => (
-                  <img 
-                    key={image.url || `image-${index}`} // Use image.url as key if available, fallback to index
-                    src={image.url || image} // Handle both object format (url) and direct string URL
-                    alt={`Post image ${index + 1}`}
-                    className="w-full object-cover max-h-[450px] shadow-inner shadow-black/10"
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Handle single image (for backward compatibility - assuming post.image is a string URL) */}
-            {post.image && !post.images && (
-              <img 
-                key={post.image} // Use image URL as key
-                src={post.image} 
-                alt="Post"
-                className="w-full object-cover max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
-              />
-            )}
-
-            {post.video && (
-              <video 
-                key={post.video} // Use video URL as key
-                src={post.video} 
-                controls
-                className="w-full object-cover max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
-              />
-            )}
-
-            <div className="px-6 py-3 flex justify-between text-sm text-gray-600 border-t border-gray-200">
-              <span>{(post.likes?.length || 0)} likes</span>
-              <span>{post.comments?.length || 0} comments</span>
-              <span>0 shares</span>
-            </div>
-
-            <div className="px-4 py-3 border-t border-gray-200 flex justify-between items-center bg-gray-50 rounded-b-xl">
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => toggleStateSet(setLikedPosts, likedPosts, post._id, 'like')}
-                  className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${likedPosts.has(post._id) ? 'text-red-500 bg-red-100' : 'text-gray-600 hover:text-red-500 hover:bg-red-50'}`}
-                >
-                  <HeartIcon filled={likedPosts.has(post._id)} />
-                  <span>Like</span>
-                </button>
-
-                <button
-                  onClick={() => handleToggleComments(post._id)}
-                  className="flex items-center space-x-1.5 px-2 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
-                >
-                  <CommentIcon />
-                  <span>Comment</span>
-                </button>
-
-                <div className="relative group">
-                  <button
-                    onClick={() => handleShare(post._id)}
-                    className="flex items-center space-x-1.5 px-2 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
-                  >
-                    <ShareIcon />
-                    <span>Share</span>
-                  </button>
-                  {/* Share dropdown on hover */}
-                  <div className="absolute left-0 mt-2 z-10 hidden group-hover:block bg-white border border-gray-200 rounded shadow-lg p-2 min-w-[140px]">
-                    <button onClick={() => handleShare(post._id)} className="block w-full text-left px-3 py-1 hover:bg-gray-100 text-sm">Copy Link</button>
-                    <button onClick={() => shareTo('whatsapp', post._id)} className="block w-full text-left px-3 py-1 hover:bg-gray-100 text-sm">WhatsApp</button>
-                    <button onClick={() => shareTo('twitter', post._id)} className="block w-full text-left px-3 py-1 hover:bg-gray-100 text-sm">Twitter</button>
-                    <button onClick={() => shareTo('facebook', post._id)} className="block w-full text-left px-3 py-1 hover:bg-gray-100 text-sm">Facebook</button>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => toggleStateSet(setSavedPosts, savedPosts, post._id, 'save')}
-                className={`p-2 rounded-full transition-all duration-200 ${savedPosts.has(post._id) ? 'text-yellow-500 bg-yellow-100' : 'text-gray-600 hover:text-yellow-500 hover:bg-yellow-50'}`}
-              >
-                <BookmarkIcon filled={savedPosts.has(post._id)} />
-              </button>
-            </div>
-
-            {showComments.has(post._id) && (
-              <div className="px-6 py-4 border-t border-gray-200 bg-gray-100 rounded-b-xl">
-                <div className="flex space-x-4 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-base font-semibold shadow-md">
-                    You
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Write a comment..."
-                    value={commentInputs[post._id] || ''}
-                    onChange={e => handleCommentInput(post._id, e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handlePostComment(post._id); }}
-                    className="flex-1 bg-gray-200 border border-gray-300 rounded-full px-4 py-2.5 text-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
-                  />
-                  <button
-                    onClick={() => handlePostComment(post._id)}
-                    className="ml-2 px-3 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition"
-                  >
-                    Post
-                  </button>
-                </div>
-                {commentLoading[post._id] ? (
-                  <div className="text-sm text-gray-500">Loading comments...</div>
-                ) : (
-                  <div className="space-y-2">
-                    {(comments[post._id] || []).length === 0 ? (
-                      <div className="text-sm text-gray-600">No comments yet. Be the first to comment!</div>
-                    ) : (
-                      comments[post._id].map((c, idx) => (
-                        <div key={c._id || idx} className="flex items-start space-x-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold shadow-md">
-                            {c.user?.fullname?.[0]?.toUpperCase() || 'U'}
-                          </div>
-                          <div>
-                            <div className="font-semibold text-gray-800 text-sm">{c.user?.fullname || 'User'}</div>
-                            <div className="text-gray-700 text-sm">{c.content}</div>
-                            <div className="text-xs text-gray-400">{new Date(c.createdAt).toLocaleString()}</div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </article>
+          <PostCard
+            key={post._id}
+            post={post}
+            displayUser={displayUser}
+            initials={initials}
+            savedPosts={savedPosts}
+            toggleStateSet={toggleStateSet}
+            setSavedPosts={setSavedPosts}
+            openDropdownId={openDropdownId}
+            setOpenDropdownId={setOpenDropdownId}
+            likedPosts={likedPosts}
+            setLikedPosts={setLikedPosts}
+            showComments={showComments}
+            setShowComments={setShowComments}
+            commentInputs={commentInputs}
+            setCommentInputs={setCommentInputs}
+            comments={comments}
+            setComments={setComments}
+            commentLoading={commentLoading}
+            setCommentLoading={setCommentLoading}
+            handleToggleComments={handleToggleComments}
+            handleCommentInput={handleCommentInput}
+            handlePostComment={handlePostComment}
+            handleShare={handleShare}
+            shareTo={shareTo}
+            userProfile={userProfile}
+            handleDeletePost={handleDeletePost}
+            handleDeleteComment={handleDeleteComment}
+          />
         );
-
       })}
     </div>
   );
