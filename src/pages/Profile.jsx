@@ -77,6 +77,162 @@ const formatDate = (dateString) => {
   });
 };
 
+// Modal component for image viewing and editing
+const Modal = ({ open, onClose, children }) => {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+      <div
+        className="bg-white rounded-lg shadow-lg p-6 relative max-w-lg w-full max-h-[90vh] overflow-y-auto"
+      >
+        <button
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+          onClick={onClose}
+        >
+          ✕
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// Edit Profile Form
+function EditProfileForm({ userData, onClose, onProfileUpdated }) {
+  const [form, setForm] = useState({
+    fullname: userData.fullname || '',
+    bio: userData.bio || '',
+    branch: userData.branch || '',
+    year: userData.year || '',
+    email: userData.email || '',
+    mobile: userData.mobile || '',
+    linkedIn: userData.linkedIn || '',
+    github: userData.github || '',
+    leetcode: userData.leetcode || '',
+    skills: userData.skills ? userData.skills.join(', ') : '',
+    avatar: userData.avatar || '',
+    coverImage: userData.coverImage || '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(userData.avatar || '');
+  const [coverPreview, setCoverPreview] = useState(userData.coverImage || '');
+
+  // Handle text input
+  const handleChange = e => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // Handle avatar upload
+  const handleAvatarChange = e => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarPreview(URL.createObjectURL(file));
+      setForm({ ...form, avatar: file });
+    }
+  };
+
+  // Handle cover image upload
+  const handleCoverChange = e => {
+    const file = e.target.files[0];
+    if (file) {
+      setCoverPreview(URL.createObjectURL(file));
+      setForm({ ...form, coverImage: file });
+    }
+  };
+
+  // Handle submit
+  const handleSubmit = async e => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        if (key === 'skills') {
+          formData.append(key, value.split(',').map(s => s.trim()).filter(Boolean).join(','));
+        } else {
+          formData.append(key, value);
+        }
+      });
+      await axios.patch(
+        `http://localhost:8000/api/v1/users/profile`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+      );
+      onProfileUpdated();
+      onClose();
+    } catch (err) {
+      alert('Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <h2 className="text-xl font-bold mb-2">Edit Profile</h2>
+      <div>
+        <label className="block font-medium">Full Name</label>
+        <input name="fullname" value={form.fullname} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block font-medium">Bio</label>
+        <textarea name="bio" value={form.bio} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block font-medium">Branch</label>
+        <input name="branch" value={form.branch} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block font-medium">Year</label>
+        <input name="year" value={form.year} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block font-medium">Email</label>
+        <input name="email" value={form.email} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block font-medium">Mobile</label>
+        <input name="mobile" value={form.mobile} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block font-medium">LinkedIn</label>
+        <input name="linkedIn" value={form.linkedIn} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block font-medium">GitHub</label>
+        <input name="github" value={form.github} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block font-medium">LeetCode</label>
+        <input name="leetcode" value={form.leetcode} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block font-medium">Skills (comma separated)</label>
+        <input name="skills" value={form.skills} onChange={handleChange} className="input w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block font-medium">Avatar</label>
+        <input type="file" accept="image/*" onChange={handleAvatarChange} className="block mt-1" />
+        {avatarPreview && (
+          <img src={avatarPreview} alt="Avatar Preview" className="w-16 h-16 rounded-full mt-2" />
+        )}
+      </div>
+      <div>
+        <label className="block font-medium">Cover Image</label>
+        <input type="file" accept="image/*" onChange={handleCoverChange} className="block mt-1" />
+        {coverPreview && (
+          <img src={coverPreview} alt="Cover Preview" className="w-full h-24 object-cover mt-2 rounded" />
+        )}
+      </div>
+      <div className="flex justify-end gap-2 mt-4">
+        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+        <button type="submit" disabled={loading} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">{loading ? 'Saving...' : 'Save'}</button>
+      </div>
+    </form>
+  );
+}
+
 export default function Profile() {
   const { id } = useParams(); // Get the id from URL parameters
   const navigate = useNavigate(); // Initialize useNavigate
@@ -84,11 +240,9 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-
-  const [userPosts, setUserPosts] = useState([]);
-  const [postsLoading, setPostsLoading] = useState(true);
-  const [postsError, setPostsError] = useState(null);
-
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [showCoverModal, setShowCoverModal] = useState(false);
 
   const fetchUserProfile = async () => {
     try {
@@ -151,31 +305,6 @@ export default function Profile() {
   const handleRetry = () => {
     fetchUserProfile();
   };
-
-  const fetchUserPosts = async (userId) => {
-    try{
-      setPostsLoading(true);
-      const token = localStorage.getItem('accessToken');
-      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-      const response =  await axios.get(`http://localhost:8000/api/v1/posts?userId=${userId}`, config);
-      setUserPosts(response.data.data);
-
-    }catch(error){
-       setPostsError("Failed to fetch posts");
-    }finally{
-      setPostsLoading(false);
-    }
-
-  }
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  useEffect(() => {
-    if (userData && userData._id) {
-      fetchUserPosts(userData._id);
-    }
-  }, [userData]);
 
   // Determine if the current profile is the logged-in user's own profile
   const getLoggedInUserId = () => {
@@ -250,7 +379,8 @@ export default function Profile() {
           <img 
             src={coverImage || defaultCoverImage} 
             alt="Cover" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover cursor-pointer"
+            onClick={() => setShowCoverModal(true)}
             onError={(e) => {
               e.target.style.display = 'none';
             }}
@@ -267,7 +397,8 @@ export default function Profile() {
                   <img
                     src={avatar}
                     alt={fullname}
-                    className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                    className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover cursor-pointer"
+                    onClick={() => setShowAvatarModal(true)}
                     onError={(e) => {
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'flex';
@@ -300,7 +431,7 @@ export default function Profile() {
                   </div>
                   {isOwnProfile && isAuthenticated && (
                     <button
-                      onClick={handleEditClick}
+                      onClick={() => setShowEditModal(true)}
                       className="mt-4 sm:mt-0 px-6 py-2 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition flex items-center space-x-2"
                     >
                       <EditIcon />
@@ -340,6 +471,12 @@ export default function Profile() {
                   <div className="flex items-center text-gray-600">
                     <EmailIcon />
                     <span className="ml-2 text-sm">{email}</span>
+                  </div>
+                )}
+                {mobile && (
+                  <div className="flex items-center text-gray-600">
+                    <PhoneIcon />
+                    <span className="ml-2 text-sm">{mobile}</span>
                   </div>
                 )}
               </div>
@@ -410,80 +547,31 @@ export default function Profile() {
           </div>
 
           {/* Right Content - Posts */}
-       {/* Right Content - Posts */}
-<div className="lg:col-span-2">
-  <div className="bg-white rounded-lg shadow-sm p-6">
-    <h2 className="text-xl font-semibold text-gray-900 mb-6">Posts</h2>
-    {postsLoading ? (
-      <div className="text-center py-12">Loading posts...</div>
-    ) : postsError ? (
-      <div className="text-center py-12 text-red-500">{postsError}</div>
-    ) : userPosts.length === 0 ? (
-      <div className="text-center py-12">
-        <div className="text-gray-400 text-6xl mb-4">📝</div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No recent activity</h3>
-        <p className="text-gray-600">Your activity will appear here</p>
-      </div>
-    ) : (
-      <div className="space-y-8">
-        {userPosts.map(post => (
-          <div
-            key={post._id}
-            className="bg-white rounded-xl shadow-md border border-gray-200 p-6 transition-transform duration-200 hover:scale-[1.01]"
-          >
-            <div className="flex items-center mb-4">
-              {/* Avatar */}
-              {avatar ? (
-                <img
-                  src={avatar}
-                  alt={fullname}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-indigo-400 shadow"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow">
-                  {avatarInitials}
-                </div>
-              )}
-              <div className="ml-3">
-                <div className="font-semibold text-gray-900">{fullname}</div>
-                <div className="text-xs text-gray-500">
-                  {new Date(post.createdAt).toLocaleString()}
-                </div>
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-6xl mb-4">📝</div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No recent activity</h3>
+                <p className="text-gray-600">Your activity will appear here</p>
               </div>
-            </div>
-            <h3 className="font-bold text-lg mb-2">{post.title}</h3>
-            <p className="text-gray-800 mb-3">{post.content}</p>
-            {/* Images grid */}
-            {post.images && post.images.length > 0 && (
-              <div className={`grid gap-2 mb-3 ${post.images.length === 1 ? 'grid-cols-1' : post.images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-                {post.images.map((img, idx) => (
-                  <img
-                    key={img.url || idx}
-                    src={img.url}
-                    alt={img.alt || `Post image ${idx + 1}`}
-                    className="w-full h-48 object-contain rounded-lg shadow hover:scale-105 transition-transform duration-200"
-                  />
-                ))}
-              </div>
-            )}
-            {/* Post meta */}
-            <div className="flex items-center text-sm text-gray-500 mt-2">
-              <span className="mr-4 flex items-center">
-                <svg className="inline w-4 h-4 mr-1 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                </svg>
-                {post.images?.length || 0} images
-              </span>
-              {/* Add more meta info here, like likes/comments */}
             </div>
           </div>
-        ))}
+        </div>
       </div>
-    )}
-    </div>
-    </div>
-    </div>
-    </div>
+      <Modal open={showAvatarModal} onClose={() => setShowAvatarModal(false)}>
+        <img src={avatar || defaultCoverImage} alt="Profile" className="w-full h-auto rounded-lg" />
+      </Modal>
+      <Modal open={showCoverModal} onClose={() => setShowCoverModal(false)}>
+        <img src={coverImage || defaultCoverImage} alt="Cover" className="w-full h-auto rounded-lg" />
+      </Modal>
+      <Modal open={showEditModal} onClose={() => setShowEditModal(false)}>
+        <EditProfileForm
+          userData={userData}
+          onClose={() => setShowEditModal(false)}
+          onProfileUpdated={fetchUserProfile}
+        />
+      </Modal>
     </div>
   );
 } 

@@ -3,10 +3,12 @@ import { Users, ChevronLeft, ChevronRight, Loader2, Heart, Star } from 'lucide-r
 import { roommateAPI } from '../services/api';
 import { Link } from 'react-router-dom';
 
+
 export default function AllRoommateProfilesCarousel() {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+
 
   useEffect(() => {
     roommateAPI.getAllProfiles()

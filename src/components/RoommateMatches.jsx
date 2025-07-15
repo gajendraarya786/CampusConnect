@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Heart, Users, AlertCircle, Loader2, Star, MessageCircle, Trophy } from 'lucide-react';
 import { roommateAPI } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function RoommateMatches() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     roommateAPI.getMatches()
       .then(data => setMatches(data))
       .finally(() => setLoading(false));
   }, []);
+
 
   const getMatchColor = (score) => {
     if (score >= 90) return 'text-green-600 bg-green-100';
@@ -177,10 +181,11 @@ export default function RoommateMatches() {
                         )}
                       </div>
                     </div>
+                  
 
                     {/* Action Buttons */}
                     <div className="flex gap-3">
-                      <button className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                      <button onClick={() => navigate(`/messages?userId=${profile.user?._id}`)} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
                         <MessageCircle className="w-4 h-4" />
                         Connect
                       </button>

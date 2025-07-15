@@ -429,9 +429,12 @@ export default function SocialMediaPostCards() {
         {posts.filter(Boolean).map((post) => {
           // Ensure post.author is an object, if not, provide a default
           const authorData = post.author || {};
+          console.log('post:', post);
+          console.log('authorData:', authorData);
+
 
           const displayUser = {
-            name: authorData.fullName || 'Unknown User',
+            name: authorData.fullName || authorData.fullname || authorData.name|| 'Unknown User',
             username: authorData.username || '@unknown',
             avatar: authorData.avatar,
             avatarColor: `from-blue-500 to-purple-500`, // Default color if not provided

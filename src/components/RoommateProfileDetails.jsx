@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { use, useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   User, 
   Mail, 
@@ -27,6 +27,8 @@ export default function RoommateProfileDetails() {
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     roommateAPI.getProfileById(id)
@@ -139,7 +141,9 @@ export default function RoommateProfileDetails() {
           {/* Contact Actions */}
           <div className="p-6">
             <div className="flex gap-4">
-              <button className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+              <button 
+                onClick={() => navigate(`/messages?userId=${profile.user?._id}`)}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
                 <MessageCircle className="w-5 h-5" />
                 Send Message
               </button>

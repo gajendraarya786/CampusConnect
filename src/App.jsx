@@ -6,6 +6,9 @@ import AppRoutes from './routes/AppRoutes';
 import Navbar from './components/Navbar';
 import { Provider } from 'react-redux';
 import { store } from './store/store'; // Adjust path if needed
+import ScrollToTop from "./components/scrollToTop";
+
+
 
 function App() {
   return (
@@ -20,6 +23,7 @@ function App() {
         <div className="flex-1 flex flex-col h-full w-full overflow-y-auto">
           <Navbar />
           <main className="flex-1 overflow-y-auto bg-gray-50">
+            <ScrollToTop />
             <AppRoutes />
           </main>
         </div>

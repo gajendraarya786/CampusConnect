@@ -13,7 +13,6 @@ import ProjectCollaboration from '../pages/ProjectCollaboration';
 import RoommateDashboard from '../pages/RoommateDashboard';
 import RoommateProfileDetails from '../components/RoommateProfileDetails';
 
-
 // Protected Route component (only for pages requiring auth to view/edit)
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('accessToken');

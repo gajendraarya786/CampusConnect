@@ -3,6 +3,7 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import PersonalChat from "../components/PersonalChat";
 import { Search, MessageCircle, Users, Menu, X } from 'lucide-react';
+import { useLocation } from "react-router-dom";
 
 export default function Messages() {
   const user = useSelector((state) => state.auth.user);
@@ -13,6 +14,8 @@ export default function Messages() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+
+  const location = useLocation();
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -33,6 +36,20 @@ export default function Messages() {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => setUsers(res.data));
   }, [token]);
+
+  useEffect(() => {
+  // If there's a userId in the query string, open that chat
+  const params = new URLSearchParams(location.search);
+  const userId = params.get('userId');
+  if (userId) {
+    // Find the user name for display
+    const foundUser = users.find(u => u._id === userId);
+    setTargetUserId(userId);
+    setTargetUserName(foundUser ? (foundUser.fullname || foundUser.username) : '');
+    if (isMobile) setIsSidebarOpen(false);
+  }
+  // eslint-disable-next-line
+}, [location.search, users]);
 
   const filteredUsers = users
     .filter(u => u._id !== user._id)
