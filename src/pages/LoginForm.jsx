@@ -91,7 +91,7 @@ export default function LoginForm() {
       };
 
       const response = await axiosInstance.post(
-        "/api/v1users/login",
+        "/api/v1/users/login",
         loginData,
         { withCredentials: true }
       );
