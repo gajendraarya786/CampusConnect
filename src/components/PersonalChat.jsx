@@ -3,8 +3,6 @@ import { io } from 'socket.io-client';
 import axiosInstance from '../api/axiosInstance';
 import { Send, MoreVertical, ArrowLeft, Trash2 } from 'lucide-react';
 
-const socket = io(import.meta.env.VITE_API_BASE_URL.replace('/api/v1', ''), { withCredentials: true });
-
 function formatTime(ts) {
   if (!ts) return '';
   const date = new Date(ts);
@@ -15,6 +13,7 @@ function PersonalChat({ userId, otherUserId, token, otherUserName, onBack, onDel
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
+  const socketRef = useRef(null);
 
   // Fetch chat history on mount
   useEffect(() => {
@@ -36,9 +35,15 @@ function PersonalChat({ userId, otherUserId, token, otherUserName, onBack, onDel
     fetchHistory();
   }, [userId, otherUserId, token]);
 
-  // Join room and listen for messages
+  // Setup socket connection and listeners
   useEffect(() => {
-    socket.emit('joinRoom', { userId, otherUserId });
+    // Create socket connection
+    socketRef.current = io(import.meta.env.VITE_SOCKET_URL, { withCredentials: true });
+
+    // Join the chat room
+    socketRef.current.emit('joinRoom', { userId, otherUserId });
+
+    // Listen for incoming messages
     const handleReceive = (msg) => {
       if (
         (msg.from === userId && msg.to === otherUserId) ||
@@ -47,9 +52,12 @@ function PersonalChat({ userId, otherUserId, token, otherUserName, onBack, onDel
         setMessages((prev) => [...prev, msg]);
       }
     };
-    socket.on('receiveMessage', handleReceive);
+    socketRef.current.on('receiveMessage', handleReceive);
+
+    // Cleanup on unmount
     return () => {
-      socket.off('receiveMessage', handleReceive);
+      socketRef.current.off('receiveMessage', handleReceive);
+      socketRef.current.disconnect();
     };
   }, [userId, otherUserId]);
 
@@ -60,7 +68,7 @@ function PersonalChat({ userId, otherUserId, token, otherUserName, onBack, onDel
 
   const sendMessage = () => {
     if (!input.trim()) return;
-    socket.emit('sendMessage', { from: userId, to: otherUserId, content: input });
+    socketRef.current.emit('sendMessage', { from: userId, to: otherUserId, content: input });
     setInput('');
   };
 
@@ -69,7 +77,6 @@ function PersonalChat({ userId, otherUserId, token, otherUserName, onBack, onDel
       {/* Chat Header */}
       <div className="flex items-center justify-between p-3 sm:p-4 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center space-x-2 sm:space-x-3">
-          {/* Back button for mobile */}
           {onBack && (
             <button 
               onClick={onBack}
@@ -176,4 +183,4 @@ function PersonalChat({ userId, otherUserId, token, otherUserName, onBack, onDel
   );
 }
 
-export default PersonalChat; 
+export default PersonalChat;
