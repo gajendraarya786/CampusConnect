@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import axiosInstance from '../api/axiosInstance';
 import { Send, MoreVertical, ArrowLeft, Trash2 } from 'lucide-react';
 
-const socket = io('https://campusconnect-backend-cyox.onrender.com', { withCredentials: true });
+const socket = io(import.meta.env.VITE_API_BASE_URL.replace('/api/v1', ''), { withCredentials: true });
 
 function formatTime(ts) {
   if (!ts) return '';
