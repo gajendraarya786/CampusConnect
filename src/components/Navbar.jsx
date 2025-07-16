@@ -15,7 +15,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useNavigate, NavLink } from "react-router-dom";
-import axios from 'axios';
+import axiosInstance from "../api/axiosInstance";
 import logo from "../assets/nav-logo.png";
 
 export default function Navbar() {
@@ -42,7 +42,7 @@ export default function Navbar() {
         return;
       }
 
-      const response = await axios.get('http://localhost:8000/api/v1/users/profile', {
+      const response = await axiosInstance.get('/users/profile', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -76,7 +76,7 @@ export default function Navbar() {
     }
     try {
       const token = localStorage.getItem('accessToken');
-      const res = await axios.get(`http://localhost:8000/api/v1/users?search=${value}`, {
+      const res = await axiosInstance.get(`/users?search=${value}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSearchResults(res.data.data || []);

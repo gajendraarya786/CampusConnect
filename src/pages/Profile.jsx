@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '../api/axiosInstance';
 import { useParams, useNavigate } from 'react-router-dom';
 
 // Icons
@@ -155,8 +155,8 @@ function EditProfileForm({ userData, onClose, onProfileUpdated }) {
           formData.append(key, value);
         }
       });
-      await axios.patch(
-        `http://localhost:8000/api/v1/users/profile`,
+      await axiosInstance.patch(
+        `/users/profile`,
         formData,
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
       );
@@ -283,7 +283,7 @@ export default function Profile() {
       console.log('Profile.jsx: Constructed endpoint', endpoint);
       console.log('Profile.jsx: Axios config headers', config.headers);
 
-      const response = await axios.get(`http://localhost:8000/api/v1${endpoint}`, config);
+      const response = await axiosInstance.get(`${endpoint}`, config);
 
       setUserData(response.data.data);
     } catch (err) {

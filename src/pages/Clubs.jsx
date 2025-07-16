@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import axios from 'axios';
+import axiosInstance from '../api/axiosInstance';
 import { Users, MapPin, Tag, Loader2, AlertCircle, Search, Filter } from 'lucide-react';
 
 const categoryColors = {
@@ -43,7 +43,7 @@ const Clubs = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get('http://localhost:8000/api/v1/clubs');
+        const response = await axiosInstance.get('/clubs');
         console.log(response.data);
         setClubs(response.data || []);
       } catch (error) {

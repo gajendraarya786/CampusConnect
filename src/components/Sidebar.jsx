@@ -9,7 +9,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../api/axiosInstance';
 import logo from "../assets/nav-logo.png";
 
 export default function Sidebar() {
@@ -30,7 +30,7 @@ export default function Sidebar() {
         return;
       }
 
-      const response = await axios.get('http://localhost:8000/api/v1/users/profile', {
+      const response = await axiosInstance.get('/users/profile', {
         headers: {
           Authorization: `Bearer ${token}`
         }

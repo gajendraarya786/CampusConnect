@@ -1,4 +1,4 @@
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -90,8 +90,8 @@ export default function LoginForm() {
         ...(isEmail ? { email: loginField } : { username: loginField })
       };
 
-      const response = await axios.post(
-        "http://localhost:8000/api/v1/users/login",
+      const response = await axiosInstance.post(
+        "/users/login",
         loginData,
         { withCredentials: true }
       );

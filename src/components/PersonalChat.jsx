@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
-import axios from 'axios';
+import axiosInstance from '../api/axiosInstance';
 import { Send, MoreVertical, ArrowLeft, Trash2 } from 'lucide-react';
 
 const socket = io('http://localhost:8000', { withCredentials: true });
@@ -20,8 +20,8 @@ function PersonalChat({ userId, otherUserId, token, otherUserName, onBack, onDel
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:8000/api/v1/users/chat-history`,
+        const res = await axiosInstance.get(
+          `/users/chat-history`,
           {
             params: { userId, otherUserId },
             headers: { Authorization: `Bearer ${token}` },

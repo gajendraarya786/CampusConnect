@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Upload, X, Check, User, Mail, Lock, Calendar, Phone, Github, Linkedin, Code, FileText, Tag } from 'lucide-react';
-import axios from 'axios';
+import axiosInstance from '../api/axiosInstance'
 
 const SignupForm = () => {
   const [formData, setFormData] = useState({
@@ -122,7 +122,7 @@ const SignupForm = () => {
     if (coverImage) data.append("coverImage", coverImage);
 
  try {
-  const response = await axios.post('http://localhost:8000/api/v1/users/register', data);
+  const response = await axiosInstance.post('/users/register', data);
 
   // Axios only enters try if status is 2xx
   console.log("Registration successful", response.data);

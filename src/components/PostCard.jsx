@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../services/api';
+import axiosInstance from '../api/axiosInstance';
+
 
 // Custom Icons
 const HeartIcon = ({ filled = false }) => (
@@ -100,7 +101,7 @@ const CreatePostModal = ({ isOpen, onClose, onPost }) => {
         }
       });
 
-      const { data } = await api.post('/posts', postData, {
+      const { data } = await axiosInstance.post('/posts', postData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -515,11 +516,11 @@ export default function SocialMediaPostCards() {
         setError(null);
         
         // Fetch user profile directly using `api`
-        const profileResponse = await api.get('/users/profile');
+        const profileResponse = await axiosInstance.get('/users/profile');
         setUserProfile(profileResponse.data.data);
 
         // Fetch posts directly using `api`
-        const postsResponse = await api.get('/posts');
+        const postsResponse = await axiosInstance.get('/posts');
         setPosts(postsResponse.data.data);
 
         // Initialize liked posts based on fetched data and user profile
@@ -555,11 +556,11 @@ export default function SocialMediaPostCards() {
       try {
         if (hasInteracted) {
           // Unlike post
-          await api.delete(`/posts/${postId}/unlike`);
+          await axiosInstance.delete(`/posts/${postId}/unlike`);
           newSet.delete(postId);
         } else {
           // Like post
-          await api.post(`/posts/${postId}/like`);
+          await axiosInstance.post(`/posts/${postId}/like`);
           newSet.add(postId);
         }
         stateSetter(newSet);
@@ -616,7 +617,7 @@ export default function SocialMediaPostCards() {
     setCommentLoading(prev => ({ ...prev, [postId]: true }));
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await api.get(`/posts/${postId}/comments`, {
+      const response = await axiosInstance.get(`/posts/${postId}/comments`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -653,7 +654,7 @@ export default function SocialMediaPostCards() {
     if (!text?.trim()) return;
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await api.post(`/${postId}/comments`, { content: text }, {
+      const response = await axiosInstance.post(`/posts/${postId}/comments`, { content: text }, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -695,7 +696,7 @@ export default function SocialMediaPostCards() {
   const handleDeletePost = async (postId) => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
     try {
-      await api.delete(`/posts/${postId}`);
+      await axiosInstance.delete(`/posts/${postId}`);
       setPosts(posts => posts.filter(p => p._id !== postId));
     } catch (err) {
       alert("Failed to delete post");
@@ -706,7 +707,7 @@ export default function SocialMediaPostCards() {
   const handleDeleteComment = async (postId, commentId) => {
     if (!window.confirm("Delete this comment?")) return;
     try {
-      await api.delete(`/posts/${postId}/comments/${commentId}`);
+      await axiosInstance.delete(`/posts/${postId}/comments/${commentId}`);
       setComments(prev => ({
         ...prev,
         [postId]: (prev[postId] || []).filter(c => c._id !== commentId)

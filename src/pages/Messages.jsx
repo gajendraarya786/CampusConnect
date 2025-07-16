@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 import { useSelector } from "react-redux";
 import PersonalChat from "../components/PersonalChat";
 import { Search, MessageCircle, Users, Trash2, Menu, X, ArrowLeft } from 'lucide-react';
@@ -28,7 +28,7 @@ export default function Messages() {
   }, []);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/api/v1/users/all", {
+    axiosInstance.get("/users/all", {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => setUsers(res.data));
   }, [token]);
@@ -63,7 +63,7 @@ export default function Messages() {
   const handleDeleteChat = async (otherUserId) => {
     if (!window.confirm("Are you sure you want to delete this chat? This cannot be undone.")) return;
     try {
-      await axios.delete(`http://localhost:8000/api/v1/users/chat-history/${otherUserId}`, {
+      await axiosInstance.delete(`/users/chat-history/${otherUserId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (targetUserId === otherUserId) {

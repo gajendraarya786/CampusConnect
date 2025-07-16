@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Users, Calendar, MapPin, Code, BookOpen, Target, Edit, Trash2, UserPlus, Link as LinkIcon, GitBranch } from 'lucide-react';
-import api from '../services/api';
+import axiosInstance from '../api/axiosInstance';
+import axios from 'axios';
 
 const CATEGORY_OPTIONS = [
   'hackathon',
@@ -89,7 +90,7 @@ const ProjectCollaboration = () => {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) return;
-      const response = await api.get('/users/profile', {
+      const response = await axiosInstance.get('/users/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCurrentUser(response.data.data);
@@ -101,7 +102,7 @@ const ProjectCollaboration = () => {
   const fetchAllProjects = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/projects');
+      const response = await axiosInstance.get('/projects');
       setProjects(response.data.data || []);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -115,7 +116,7 @@ const ProjectCollaboration = () => {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) return;
-      const response = await api.get('/projects/user/me', {
+      const response = await axiosInstance.get('/projects/user/me', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserProjects(response.data.data || []);
@@ -128,7 +129,7 @@ const ProjectCollaboration = () => {
   const handleJoinProject = async (projectId) => {
     try {
       const token = localStorage.getItem('accessToken');
-      await api.post(`/projects/${projectId}/join`, {}, {
+      await axiosInstance.post(`/projects/${projectId}/join`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchAllProjects();
@@ -169,7 +170,7 @@ const ProjectCollaboration = () => {
       };
       if (editProject) {
         // Update
-        const response = await api.put(`/projects/${editProject._id}`, payload, {
+        const response = await axiosInstance.put(`/projects/${editProject._id}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setProjects(prev => prev.map(p => p._id === editProject._id ? response.data.data : p));
@@ -177,7 +178,7 @@ const ProjectCollaboration = () => {
         alert('Project updated successfully!');
       } else {
         // Create
-        const response = await api.post('/projects', payload, {
+        const response = await axiosInstance.post('/projects', payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setProjects(prev => [response.data.data, ...prev]);
@@ -194,7 +195,7 @@ const ProjectCollaboration = () => {
     if (!window.confirm('Are you sure you want to delete this project?')) return;
     try {
       const token = localStorage.getItem('accessToken');
-      await api.delete(`/projects/${projectId}`, {
+      await axiosInstance.delete(`/projects/${projectId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProjects(prev => prev.filter(p => p._id !== projectId));
