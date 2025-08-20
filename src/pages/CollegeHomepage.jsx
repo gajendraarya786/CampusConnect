@@ -163,65 +163,71 @@ const CollegeHomepage = () => {
         </div>
       </div>
 
-      {/* Hero Carousel */}
-      <section className="relative h-60 sm:h-72 md:h-80 lg:h-96 xl:h-[450px] overflow-hidden">
-        <div 
-          className="flex transition-transform duration-500 ease-in-out h-full"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+{/* Hero Carousel */}
+<section className="relative h-[300px] sm:h-[380px] md:h-[420px] lg:h-[480px] xl:h-[520px] overflow-hidden">
+  {/* Slides Wrapper */}
+  <div
+    className="flex transition-transform duration-500 ease-in-out h-full"
+    style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+  >
+    {heroSlides.map((slide, index) => (
+      <div key={index} className="w-full h-full flex-shrink-0 relative">
+        {/* Background with gradient overlay */}
+        <div
+          className="w-full h-full bg-cover bg-center"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url(${slide.image})`,
+          }}
         >
-          {heroSlides.map((slide, index) => (
-            <div key={index} className="w-full h-full flex-shrink-0 relative">
-              <div 
-                className="w-full h-full bg-cover bg-center"
-                style={{ 
-                  backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${slide.image})`
-                }}
+          {/* Slide Content */}
+          <div className="flex items-center justify-center h-full px-3 sm:px-6 md:px-8 pt-12 sm:pt-16">
+            <div className="text-center text-white max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 md:mb-5 leading-tight">
+                {slide.title}
+              </h1>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-4 sm:mb-5 md:mb-6 opacity-90 px-2">
+                {slide.subtitle}
+              </p>
+              <button
+                onClick={navigateToSignup}
+                className="bg-white text-gray-900 px-5 sm:px-6 md:px-7 py-2.5 sm:py-3 md:py-3.5 rounded-full text-sm sm:text-base md:text-lg font-semibold hover:bg-gray-100 transform hover:scale-105 transition-all duration-200 shadow-lg"
               >
-                <div className="flex items-center justify-center h-full px-2 sm:px-4 md:px-6 pt-16">
-                  <div className="text-center text-white max-w-xs sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-3 md:mb-4 leading-tight">
-                      {slide.title}
-                    </h1>
-                    <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-5 md:mb-6 opacity-90 px-2">
-                      {slide.subtitle}
-                    </p>
-                    <button onClick={navigateToSignup} className="bg-white text-gray-900 px-4 sm:px-6 md:px-7 py-2 sm:py-2.5 md:py-3 rounded-full text-sm sm:text-base md:text-lg font-semibold hover:bg-gray-100 transform hover:scale-105 transition-all duration-200 shadow-lg">
-                      {slide.cta}
-                    </button>
-                  </div>
-                </div>
-              </div>
+                {slide.cta}
+              </button>
             </div>
-          ))}
+          </div>
         </div>
-        
-        {/* Carousel Controls */}
-        <button 
-          onClick={prevSlide}
-          className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 sm:p-3 rounded-full backdrop-blur-sm transition-all duration-200"
-        >
-          <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
-        </button>
-        <button 
-          onClick={nextSlide}
-          className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 sm:p-3 rounded-full backdrop-blur-sm transition-all duration-200"
-        >
-          <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
-        </button>
-        
-        {/* Carousel Indicators */}
-        <div className="absolute bottom-2 sm:bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1 sm:space-x-2">
-          {heroSlides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentSlide(index)}
-              className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-200 ${
-                currentSlide === index ? 'bg-white scale-125' : 'bg-white/50'
-              }`}
-            />
-          ))}
-        </div>
-      </section>
+      </div>
+    ))}
+  </div>
+
+  {/* Carousel Controls */}
+  <button
+    onClick={prevSlide}
+    className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 sm:p-3 rounded-full backdrop-blur-sm transition-all duration-200"
+  >
+    <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
+  </button>
+  <button
+    onClick={nextSlide}
+    className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 sm:p-3 rounded-full backdrop-blur-sm transition-all duration-200"
+  >
+    <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
+  </button>
+
+  {/* Carousel Indicators */}
+  <div className="absolute bottom-3 sm:bottom-5 left-1/2 transform -translate-x-1/2 flex space-x-2">
+    {heroSlides.map((_, index) => (
+      <button
+        key={index}
+        onClick={() => setCurrentSlide(index)}
+        className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-200 ${
+          currentSlide === index ? "bg-white scale-125" : "bg-white/50"
+        }`}
+      />
+    ))}
+  </div>
+</section>
 
 
 
@@ -389,14 +395,6 @@ const CollegeHomepage = () => {
         </div>
       </section>
 
-      {/* Scroll to Top Button */}
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 z-50 group"
-        aria-label="Scroll to top"
-      >
-        <ChevronRight className="w-5 h-5 transform -rotate-90 group-hover:-translate-y-0.5 transition-transform" />
-      </button>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8 px-3 sm:px-4 md:px-6 lg:px-8">
