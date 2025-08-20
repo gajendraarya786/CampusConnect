@@ -17,52 +17,24 @@ import {
 import { useNavigate, NavLink } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import logo from "../assets/nav-logo.png";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from '../store/authSlice';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeItem, setActiveItem] = useState('Feed');
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  const fetchUserProfile = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      const response = await axiosInstance.get('/users/profile', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      setUser(response.data.data);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      if (error.response?.status === 401) {
-        localStorage.removeItem('accessToken');
-        setUser(null);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const dispatch = useDispatch();
+  
+  // Use Redux store instead of local state
+  const { user, token } = useSelector((state) => state.auth);
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    setUser(null);
+    dispatch(logout());
     navigate('/login');
   };
 
@@ -75,7 +47,6 @@ export default function Navbar() {
       return;
     }
     try {
-      const token = localStorage.getItem('accessToken');
       const res = await axiosInstance.get(`/users?search=${value}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -455,4 +426,4 @@ function SettingsModal({ open, onClose }) {
       </div>
     </div>
   );
-}
+} 
