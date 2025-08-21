@@ -39,6 +39,62 @@ const VerifiedIcon = () => (
   </svg>
 );
 
+// Loading Skeleton Components
+const PostSkeleton = () => (
+  <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-6 sm:mb-8 animate-pulse">
+    <div className="p-4 sm:p-6">
+      {/* Header skeleton */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-300"></div>
+          <div className="flex-1 min-w-0">
+            <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+            <div className="h-3 bg-gray-300 rounded w-24"></div>
+          </div>
+        </div>
+        <div className="w-6 h-6 bg-gray-300 rounded"></div>
+      </div>
+      
+      {/* Content skeleton */}
+      <div className="space-y-2 mb-4">
+        <div className="h-4 bg-gray-300 rounded w-full"></div>
+        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+      </div>
+      
+      {/* Image skeleton */}
+      <div className="h-48 bg-gray-300 rounded mb-4"></div>
+      
+      {/* Stats skeleton */}
+      <div className="flex justify-between mb-3">
+        <div className="h-3 bg-gray-300 rounded w-16"></div>
+        <div className="h-3 bg-gray-300 rounded w-20"></div>
+        <div className="h-3 bg-gray-300 rounded w-16"></div>
+      </div>
+      
+      {/* Actions skeleton */}
+      <div className="flex justify-center space-x-4 py-3 bg-gray-50 rounded-lg">
+        <div className="h-8 bg-gray-300 rounded-full w-16"></div>
+        <div className="h-8 bg-gray-300 rounded-full w-20"></div>
+        <div className="h-8 bg-gray-300 rounded-full w-16"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const PostCreatorSkeleton = () => (
+  <div className="bg-white p-4 sm:p-6 mb-6 sm:mb-8 rounded-xl shadow-lg border border-gray-200 animate-pulse">
+    <div className="h-20 bg-gray-300 rounded-lg mb-4"></div>
+    <div className="flex justify-between items-center">
+      <div className="flex space-x-3">
+        <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+        <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+        <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+      </div>
+      <div className="h-10 bg-gray-300 rounded-full w-20"></div>
+    </div>
+  </div>
+);
+
 const CreatePostModal = ({ isOpen, onClose, onPost }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -372,6 +428,7 @@ function PostCard({
                 src={image.url || image}
                 alt={`Post image ${index + 1}`}
                 className="w-full object-cover max-h-[250px] sm:max-h-[450px] shadow-inner shadow-black/10"
+                loading="lazy"
               />
             ))}
           </div>
@@ -383,6 +440,7 @@ function PostCard({
             src={post.image} 
             alt="Post"
             className="w-full object-cover max-h-[250px] sm:max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
+            loading="lazy"
           />
         )}
         {post.video && (
@@ -391,6 +449,7 @@ function PostCard({
             src={post.video} 
             controls
             className="w-full object-cover max-h-[250px] sm:max-h-[450px] border-y border-gray-200 shadow-inner shadow-black/10"
+            preload="metadata"
           />
         )}
         <div className="px-2 sm:px-4 py-2 sm:py-3 flex flex-row items-center justify-between text-xs sm:text-sm text-gray-600 border-t border-gray-200 gap-4">
@@ -500,7 +559,7 @@ export default function SocialMediaPostCards() {
   const [showComments, setShowComments] = useState(new Set());
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
   const [posts, setPosts] = useState([]); // Initialize as empty array
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with true for initial load
   const [error, setError] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
@@ -508,45 +567,64 @@ export default function SocialMediaPostCards() {
   const [commentLoading, setCommentLoading] = useState({});
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
-  // Fetch user profile and posts on component mount
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+  // Optimized fetch function with Promise.allSettled for parallel requests
+  const fetchDataOptimized = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Use Promise.allSettled for parallel requests - faster than sequential
+      const [profileResult, postsResult] = await Promise.allSettled([
+        axiosInstance.get('/users/profile'),
+        axiosInstance.get('/posts')
+      ]);
+
+      // Handle profile result
+      if (profileResult.status === 'fulfilled') {
+        setUserProfile(profileResult.value.data.data);
+      } else {
+        console.error('Profile fetch failed:', profileResult.reason);
+        if (profileResult.reason?.response?.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+      }
+
+      // Handle posts result
+      if (postsResult.status === 'fulfilled') {
+        setPosts(postsResult.value.data.data);
         
-        // Fetch user profile directly using `api`
-        const profileResponse = await axiosInstance.get('/users/profile');
-        setUserProfile(profileResponse.data.data);
-
-        // Fetch posts directly using `api`
-        const postsResponse = await axiosInstance.get('/posts');
-        setPosts(postsResponse.data.data);
-
         // Initialize liked posts based on fetched data and user profile
-        if (profileResponse.data.data) {
+        if (profileResult.status === 'fulfilled' && profileResult.value.data.data) {
           const userLikedPostIds = new Set(
-            postsResponse.data.data
-              .filter(post => post.likes && post.likes.some(like => like.user === profileResponse.data.data._id))
+            postsResult.value.data.data
+              .filter(post => post.likes && post.likes.some(like => like.user === profileResult.value.data.data._id))
               .map(post => post._id)
           );
           setLikedPosts(userLikedPostIds);
         }
-
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setError(error.message);
-        if (error.response?.status === 401 || error.message.includes('login')) {
-          // Redirect to login if token is missing or invalid
-          window.location.href = '/login';
-        }
-      } finally {
-        setIsLoading(false);
+      } else {
+        console.error('Posts fetch failed:', postsResult.reason);
+        setError('Failed to load posts');
       }
-    };
 
-    fetchData();
-  }, [userProfile?._id]); // Re-run if userProfile changes
+      // If both failed, show error
+      if (profileResult.status === 'rejected' && postsResult.status === 'rejected') {
+        setError('Failed to load data');
+      }
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch user profile and posts on component mount
+  useEffect(() => {
+    fetchDataOptimized();
+  }, []); // Remove userProfile dependency to avoid infinite loops
 
   const toggleStateSet = async (stateSetter, currentSet, postId, type) => {
     const newSet = new Set(currentSet);
@@ -717,58 +795,63 @@ export default function SocialMediaPostCards() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto px-2 flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="max-w-4xl mx-auto px-2 flex items-center justify-center min-h-screen">
-        <div className="text-red-600">{error}</div>
+        <div className="text-red-600 text-center">
+          <p className="text-xl mb-4">Something went wrong</p>
+          <p className="mb-4">{error}</p>
+          <button 
+            onClick={() => fetchDataOptimized()}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto px-2 sm:px-4 py-6 sm:py-8 lg:px-8 bg-gray-50 min-h-screen font-sans">
-      {/* Post Creator */}
-      <div className="bg-white p-4 sm:p-6 mb-6 sm:mb-8 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl">
-        <textarea
-          placeholder="What's happening on campus today?"
-          className="w-full resize-none text-base min-h-[90px] rounded-lg p-3 sm:p-4 bg-gray-100 border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
-          rows="3"
-          onClick={() => setIsCreatePostModalOpen(true)}
-          readOnly
-        />
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 sm:mt-5 gap-3 sm:gap-0">
-          <div className="flex space-x-3 text-indigo-600">
-            {["photo", "event", "emoji"].map((type, idx) => (
-              <button 
-                key={`post-creator-button-${idx}`} // Added key prop
-                className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-indigo-50 transition-colors duration-200 text-lg"
-                onClick={() => setIsCreatePostModalOpen(true)}
-                title={`Add ${type}`}
-              >
-                <span className="sr-only">{type}</span>
-                {/* Placeholder Icons - Replace with actual icons if available */}
-                {type === "photo" && <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L20 20m-6-6l2-2m2-2l2-2M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-                {type === "event" && <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-                {type === "emoji" && <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-              </button>
-            ))}
-          </div>
-          <button 
-            className="bg-indigo-600 text-white px-5 sm:px-7 py-2 sm:py-2.5 rounded-full font-semibold hover:bg-indigo-700 transition-transform duration-200 transform hover:scale-105 shadow-md hover:shadow-lg w-full sm:w-auto"
+      {/* Post Creator with Skeleton */}
+      {isLoading ? (
+        <PostCreatorSkeleton />
+      ) : (
+        <div className="bg-white p-4 sm:p-6 mb-6 sm:mb-8 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl">
+          <textarea
+            placeholder="What's happening on campus today?"
+            className="w-full resize-none text-base min-h-[90px] rounded-lg p-3 sm:p-4 bg-gray-100 border border-gray-300 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+            rows="3"
             onClick={() => setIsCreatePostModalOpen(true)}
-          >
-            Post
-          </button>
+            readOnly
+          />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 sm:mt-5 gap-3 sm:gap-0">
+            <div className="flex space-x-3 text-indigo-600">
+              {["photo", "event", "emoji"].map((type, idx) => (
+                <button 
+                  key={`post-creator-button-${idx}`} // Added key prop
+                  className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-indigo-50 transition-colors duration-200 text-lg"
+                  onClick={() => setIsCreatePostModalOpen(true)}
+                  title={`Add ${type}`}
+                >
+                  <span className="sr-only">{type}</span>
+                  {/* Placeholder Icons - Replace with actual icons if available */}
+                  {type === "photo" && <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L20 20m-6-6l2-2m2-2l2-2M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+                  {type === "event" && <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+                  {type === "emoji" && <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                </button>
+              ))}
+            </div>
+            <button 
+              className="bg-indigo-600 text-white px-5 sm:px-7 py-2 sm:py-2.5 rounded-full font-semibold hover:bg-indigo-700 transition-transform duration-200 transform hover:scale-105 shadow-md hover:shadow-lg w-full sm:w-auto"
+              onClick={() => setIsCreatePostModalOpen(true)}
+            >
+              Post
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Create Post Modal */}
       <CreatePostModal
@@ -777,49 +860,69 @@ export default function SocialMediaPostCards() {
         onPost={handleNewPost}
       />
 
-      {/* Feed Posts */}
-      {posts.filter(Boolean).map((post) => {
-        const authorData = post.author || {};
-        const displayUser = {
-          name: authorData.fullName || authorData.fullname || 'Unknown User',
-          username: authorData.username || '@unknown',
-          avatar: authorData.avatar,
-          avatarColor: `from-blue-500 to-purple-500`,
-          verified: authorData.verified || false,
-        };
-        const initials = displayUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
-        return (
-          <PostCard
-            key={post._id}
-            post={post}
-            displayUser={displayUser}
-            initials={initials}
-            savedPosts={savedPosts}
-            toggleStateSet={toggleStateSet}
-            setSavedPosts={setSavedPosts}
-            openDropdownId={openDropdownId}
-            setOpenDropdownId={setOpenDropdownId}
-            likedPosts={likedPosts}
-            setLikedPosts={setLikedPosts}
-            showComments={showComments}
-            setShowComments={setShowComments}
-            commentInputs={commentInputs}
-            setCommentInputs={setCommentInputs}
-            comments={comments}
-            setComments={setComments}
-            commentLoading={commentLoading}
-            setCommentLoading={setCommentLoading}
-            handleToggleComments={handleToggleComments}
-            handleCommentInput={handleCommentInput}
-            handlePostComment={handlePostComment}
-            handleShare={handleShare}
-            shareTo={shareTo}
-            userProfile={userProfile}
-            handleDeletePost={handleDeletePost}
-            handleDeleteComment={handleDeleteComment}
-          />
-        );
-      })}
+      {/* Feed Posts with Skeletons */}
+      {isLoading ? (
+        // Show skeleton posts while loading
+        Array.from({ length: 3 }).map((_, index) => (
+          <PostSkeleton key={`skeleton-${index}`} />
+        ))
+      ) : (
+        posts.filter(Boolean).map((post) => {
+          const authorData = post.author || {};
+          const displayUser = {
+            name: authorData.fullName || authorData.fullname || 'Unknown User',
+            username: authorData.username || '@unknown',
+            avatar: authorData.avatar,
+            avatarColor: `from-blue-500 to-purple-500`,
+            verified: authorData.verified || false,
+          };
+          const initials = displayUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
+          return (
+            <PostCard
+              key={post._id}
+              post={post}
+              displayUser={displayUser}
+              initials={initials}
+              savedPosts={savedPosts}
+              toggleStateSet={toggleStateSet}
+              setSavedPosts={setSavedPosts}
+              openDropdownId={openDropdownId}
+              setOpenDropdownId={setOpenDropdownId}
+              likedPosts={likedPosts}
+              setLikedPosts={setLikedPosts}
+              showComments={showComments}
+              setShowComments={setShowComments}
+              commentInputs={commentInputs}
+              setCommentInputs={setCommentInputs}
+              comments={comments}
+              setComments={setComments}
+              commentLoading={commentLoading}
+              setCommentLoading={setCommentLoading}
+              handleToggleComments={handleToggleComments}
+              handleCommentInput={handleCommentInput}
+              handlePostComment={handlePostComment}
+              handleShare={handleShare}
+              shareTo={shareTo}
+              userProfile={userProfile}
+              handleDeletePost={handleDeletePost}
+              handleDeleteComment={handleDeleteComment}
+            />
+          );
+        })
+      )}
+
+      {/* Show empty state if no posts and not loading */}
+      {!isLoading && posts.length === 0 && (
+        <div className="text-center py-12">
+          <div className="text-gray-500 text-lg mb-4">No posts yet</div>
+          <button
+            onClick={() => setIsCreatePostModalOpen(true)}
+            className="bg-indigo-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-indigo-700 transition-all duration-200"
+          >
+            Create Your First Post
+          </button>
+        </div>
+      )}
     </div>
   );
-} 
+}

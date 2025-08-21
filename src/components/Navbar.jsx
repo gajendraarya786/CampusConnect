@@ -66,7 +66,7 @@ export default function Navbar() {
   };
 
   const navigationItems = [
-    { name: 'Feed', icon: Home, path: '/' },
+    { name: 'Feed', icon: Home, path: '/feed' },
     { name: 'My Profile', icon: User, path: `/profile/${user?._id}`},
     { name: 'Friends', icon: Users, path: '/friends' },
     { name: 'Roommates', icon: Users, path: '/roommates' },

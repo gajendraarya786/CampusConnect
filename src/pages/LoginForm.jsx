@@ -116,11 +116,11 @@ export default function LoginForm() {
       }
 
       // Show success message and start redirect
-      toast.success('Login successful! Redirecting...');
+      toast.success('Login successful!');
       setIsRedirecting(true);
       setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 1000);
+        navigate('/feed', { replace: true });
+      }, 50);
 
     } catch (error) {
       let errorMessage = 'Login failed. Please try again.';
