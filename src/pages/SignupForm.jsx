@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Upload, X, Check, User, Mail, Lock, Calendar, Phone, Github, Linkedin, Code, FileText, Tag } from 'lucide-react';
-import axiosInstance from '../api/axiosInstance'
 
 const SignupForm = () => {
   const [formData, setFormData] = useState({
@@ -80,9 +79,12 @@ const SignupForm = () => {
     if (step === 1) {
       if (!formData.fullname.trim()) newErrors.fullname = 'Full name is required';
       if (!formData.email.trim()) newErrors.email = 'Email is required';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        newErrors.email = 'Please enter a valid email';
+      }
       if (!formData.username.trim()) newErrors.username = 'Username is required';
       if (!formData.password.trim()) newErrors.password = 'Password is required';
-      if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+      else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     }
     
     if (step === 2) {
@@ -91,6 +93,9 @@ const SignupForm = () => {
       if (!formData.gender.trim()) newErrors.gender = 'Gender is required';
       if (!formData.dob.trim()) newErrors.dob = 'Date of birth is required';
       if (!formData.mobile.trim()) newErrors.mobile = 'Mobile number is required';
+      else if (!/^\d{10}$/.test(formData.mobile.replace(/\D/g, ''))) {
+        newErrors.mobile = 'Please enter a valid 10-digit mobile number';
+      }
     }
     
     setErrors(newErrors);
@@ -107,49 +112,110 @@ const SignupForm = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  // Convert YYYY-MM-DD to DD/MM/YYYY
+  const formatDateForBackend = (dateString) => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateStep(2)) return;
+    
+    if (!avatar) {
+      setMessage("Error: Avatar is required");
+      return;
+    }
     
     setIsLoading(true);
     setMessage("");
     
     const data = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      data.append(key, value);
-    });
+    
+    // Add all form fields to FormData
+    data.append("fullname", formData.fullname.trim());
+    data.append("email", formData.email.trim().toLowerCase());
+    data.append("username", formData.username.trim().toLowerCase());
+    data.append("password", formData.password);
+    data.append("branch", formData.branch.trim());
+    data.append("year", formData.year.trim());
+    data.append("gender", formData.gender);
+    data.append("dob", formatDateForBackend(formData.dob)); // Convert to DD/MM/YYYY
+    data.append("mobile", formData.mobile.trim());
+    
+    // Optional fields
+    if (formData.linkedIn) data.append("linkedIn", formData.linkedIn.trim());
+    if (formData.github) data.append("github", formData.github.trim());
+    if (formData.leetcode) data.append("leetcode", formData.leetcode.trim());
+    if (formData.bio) data.append("bio", formData.bio.trim());
+    if (formData.skills) data.append("skills", formData.skills.trim());
+    
+    // Add files
     if (avatar) data.append("avatar", avatar);
     if (coverImage) data.append("coverImage", coverImage);
 
- try {
-  const response = await axiosInstance.post('/users/register', data);
+    try {
+      const response = await axiosInstance.post('/users/register', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-  // Axios only enters try if status is 2xx
-  console.log("Registration successful", response.data);
-  setMessage("Account created successfully! Welcome to our community.");
+      console.log("Registration successful", response.data);
+      setMessage("Account created successfully! Welcome to our community.");
 
-  // Reset form or redirect user here
-} catch (error) {
-  console.error("Registration error", error);
+      // Reset form
+      setFormData({
+        fullname: "",
+        email: "",
+        username: "",
+        password: "",
+        branch: "",
+        year: "",
+        gender: "",
+        dob: "",
+        mobile: "",
+        linkedIn: "",
+        github: "",
+        leetcode: "",
+        bio: "",
+        skills: "",
+      });
+      setAvatar(null);
+      setCoverImage(null);
+      setAvatarPreview(null);
+      setCoverPreview(null);
+      setCurrentStep(1);
 
-  if (error.response) {
-    // Server responded with a non-2xx status
-    const errorMessage =
-      error.response.data?.message ||
-      error.response.data?.error ||
-      `Registration failed (${error.response.status})`;
-    setMessage(`Error: ${errorMessage}`);
-  } else if (error.request) {
-    // Request was made but no response received
-    setMessage("Error: Unable to connect to server. Please check if the server is running.");
-  } else {
-    // Other error (like config error)
-    setMessage("Error: Something went wrong. Please try again.");
-  }
-} finally {
-  setIsLoading(false);
-}
+      // Optionally redirect to login after 2 seconds
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
 
+    } catch (error) {
+      console.error("Registration error", error);
+
+      if (error.response) {
+        const errorMessage =
+          error.response.data?.message ||
+          error.response.data?.error ||
+          `Registration failed (${error.response.status})`;
+        
+        // Handle specific error codes
+        if (error.response.status === 409) {
+          setMessage("Error: Username or email already exists. Please use a different one.");
+        } else {
+          setMessage(`Error: ${errorMessage}`);
+        }
+      } else if (error.request) {
+        setMessage("Error: Unable to connect to server. Please check if the server is running.");
+      } else {
+        setMessage("Error: Something went wrong. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getStepIcon = (field) => {
@@ -185,7 +251,7 @@ const SignupForm = () => {
                       name={field}
                       value={formData[field]}
                       onChange={handleChange}
-                      className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl focus: outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-600 transition-all duration-200 ${
+                      className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                         errors[field] ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
                       placeholder={`Enter your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`}
@@ -485,7 +551,7 @@ const SignupForm = () => {
         
         {/* Form */}
         <div className="bg-white rounded-2xl shadow-lg p-8">
-          <div onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} encType="multipart/form-data">
             {renderStepContent()}
             
             {/* Navigation Buttons */}
@@ -533,12 +599,12 @@ const SignupForm = () => {
                 </button>
               )}
             </div>
-          </div>
+          </form>
         </div>
         
         {/* Footer */}
         <div className="text-center mt-8 text-gray-600">
-          <p>Already have an account? <a href="#" className="text-blue-600 hover:underline font-semibold">Sign In</a></p>
+          <p>Already have an account? <a href="/login" className="text-blue-600 hover:underline font-semibold">Sign In</a></p>
         </div>
       </div>
     </div>
