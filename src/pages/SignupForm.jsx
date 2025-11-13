@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Upload, X, Check, User, Mail, Lock, Calendar, Phone, Github, Linkedin, Code, FileText, Tag } from 'lucide-react';
+import axiosInstance from '../api/axiosInstance';
 
 const SignupForm = () => {
   const [formData, setFormData] = useState({
@@ -20,7 +21,6 @@ const SignupForm = () => {
   });
 
   const [message, setMessage] = useState("");
-
   const [avatar, setAvatar] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -78,10 +78,13 @@ const SignupForm = () => {
     
     if (step === 1) {
       if (!formData.fullname.trim()) newErrors.fullname = 'Full name is required';
-      if (!formData.email.trim()) newErrors.email = 'Email is required';
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = 'Please enter a valid email';
+      
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email is required';
+      } else if (!/^[a-zA-Z]+\.[0-9]{6}@stu\.upes\.ac\.in$/.test(formData.email.trim())) {
+        newErrors.email = 'Please enter your UPES email (e.g., firstname.123456@stu.upes.ac.in)';
       }
+      
       if (!formData.username.trim()) newErrors.username = 'Username is required';
       if (!formData.password.trim()) newErrors.password = 'Password is required';
       else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
@@ -112,7 +115,6 @@ const SignupForm = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  // Convert YYYY-MM-DD to DD/MM/YYYY
   const formatDateForBackend = (dateString) => {
     if (!dateString) return '';
     const [year, month, day] = dateString.split('-');
@@ -133,15 +135,15 @@ const SignupForm = () => {
     
     const data = new FormData();
     
-    // Add all form fields to FormData
+    // Add all form fields to FormData - DO NOT lowercase email!
     data.append("fullname", formData.fullname.trim());
-    data.append("email", formData.email.trim().toLowerCase());
+    data.append("email", formData.email.trim()); // Keep original case for UPES email validation
     data.append("username", formData.username.trim().toLowerCase());
     data.append("password", formData.password);
     data.append("branch", formData.branch.trim());
     data.append("year", formData.year.trim());
     data.append("gender", formData.gender);
-    data.append("dob", formatDateForBackend(formData.dob)); // Convert to DD/MM/YYYY
+    data.append("dob", formatDateForBackend(formData.dob));
     data.append("mobile", formData.mobile.trim());
     
     // Optional fields
@@ -188,7 +190,6 @@ const SignupForm = () => {
       setCoverPreview(null);
       setCurrentStep(1);
 
-      // Optionally redirect to login after 2 seconds
       setTimeout(() => {
         window.location.href = '/login';
       }, 2000);
@@ -202,9 +203,10 @@ const SignupForm = () => {
           error.response.data?.error ||
           `Registration failed (${error.response.status})`;
         
-        // Handle specific error codes
         if (error.response.status === 409) {
           setMessage("Error: Username or email already exists. Please use a different one.");
+        } else if (error.response.status === 400) {
+          setMessage("Error: " + errorMessage);
         } else {
           setMessage(`Error: ${errorMessage}`);
         }
@@ -242,7 +244,7 @@ const SignupForm = () => {
               return (
                 <div key={field} className="relative">
                   <label className="block text-sm font-semibold text-gray-700 mb-2 capitalize">
-                    {field.replace(/([A-Z])/g, ' $1').trim()}
+                    {field === 'email' ? 'UPES Email' : field.replace(/([A-Z])/g, ' $1').trim()}
                   </label>
                   <div className="relative">
                     <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -254,7 +256,7 @@ const SignupForm = () => {
                       className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                         errors[field] ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
-                      placeholder={`Enter your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`}
+                      placeholder={field === 'email' ? 'firstname.123456@stu.upes.ac.in' : `Enter your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`}
                     />
                     {field === 'password' && (
                       <button
@@ -349,7 +351,7 @@ const SignupForm = () => {
                   placeholder="Enter your mobile number"
                 />
               </div>
-              {errors.mobile && <p className="mt-2 text-sm text-red-600 flex items-center"><X className="h-4 w-4 mr-1" />{errors.mobile}</p>}
+              {errors.mobile && <p className="mt-2 text-sm text-red-600 flex items-center"><X className="h-4 w-4 mr-1" />{errors[mobile]}</p>}
             </div>
           </div>
         );
@@ -426,7 +428,6 @@ const SignupForm = () => {
             </div>
             
             <div className="space-y-8">
-              {/* Avatar Upload */}
               <div className="text-center">
                 <label className="block text-sm font-semibold text-gray-700 mb-4">Profile Avatar *</label>
                 <div className="flex flex-col items-center">
@@ -461,7 +462,6 @@ const SignupForm = () => {
                 </div>
               </div>
               
-              {/* Cover Image Upload */}
               <div className="text-center">
                 <label className="block text-sm font-semibold text-gray-700 mb-4">Cover Image</label>
                 <div className="flex flex-col items-center">
@@ -508,13 +508,11 @@ const SignupForm = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Join Our Community</h1>
           <p className="text-lg text-gray-600">Connect with students and professionals</p>
         </div>
         
-        {/* Progress Steps */}
         <div className="flex justify-between items-center mb-8 bg-white rounded-2xl p-6 shadow-sm">
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center">
@@ -538,7 +536,6 @@ const SignupForm = () => {
           ))}
         </div>
         
-        {/* Success/Error Message */}
         {message && (
           <div className={`mb-6 p-4 rounded-xl ${
             message.includes('Error') 
@@ -549,12 +546,10 @@ const SignupForm = () => {
           </div>
         )}
         
-        {/* Form */}
         <div className="bg-white rounded-2xl shadow-lg p-8">
-          <form onSubmit={handleSubmit} encType="multipart/form-data">
+          <div>
             {renderStepContent()}
             
-            {/* Navigation Buttons */}
             <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
               <button
                 type="button"
@@ -599,10 +594,9 @@ const SignupForm = () => {
                 </button>
               )}
             </div>
-          </form>
+          </div>
         </div>
         
-        {/* Footer */}
         <div className="text-center mt-8 text-gray-600">
           <p>Already have an account? <a href="/login" className="text-blue-600 hover:underline font-semibold">Sign In</a></p>
         </div>
